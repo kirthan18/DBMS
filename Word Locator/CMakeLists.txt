@@ -3,5 +3,5 @@ project(CS564)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES wl.cpp)
+set(SOURCE_FILES wl.cpp wl.h)
 add_executable(CS564 ${SOURCE_FILES})

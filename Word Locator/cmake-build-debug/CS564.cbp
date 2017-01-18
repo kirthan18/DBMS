@@ -83,6 +83,9 @@
 		<Unit filename="/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/wl.cpp">
 			<Option target="CS564"/>
 		</Unit>
+		<Unit filename="/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/wl.h">
+			<Option target="CS564"/>
+		</Unit>
 		<Unit filename="/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>

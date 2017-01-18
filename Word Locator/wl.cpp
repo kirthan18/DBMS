@@ -1,5 +1,12 @@
+//
+// File: wl.cpp
+//
+//  Description: Add stuff here ...
+//  Student Name: Kirthanaa Raghuraman
+//  UW Campus ID: 9073422751
+//  email: kraghuraman@wisc.edu
+
 #include <iostream>
-#include <string>
 using namespace std;
 
 int main() {
