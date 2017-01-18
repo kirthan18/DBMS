@@ -1,0 +1,3 @@
+/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/cmake-build-debug/CMakeFiles/CS564.dir
