@@ -22,7 +22,7 @@ vector<string> ParseCommand(string command) {
 
             if (first_index != -1) {
                 last_index = index;
-                command_word_list.push_back(command.substr(first_index, (last_index - first_index + 1)));
+                command_word_list.push_back(tolower(command.substr(first_index, (last_index - first_index + 1))));
                 first_index = -1;
             }
         } else {
