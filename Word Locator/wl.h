@@ -18,4 +18,14 @@
  */
 std::vector<std::string> ParseCommand(std::string);
 
+/**
+ * Validates each command and prints error messages when necessary.
+ */
+void ValidateAndExecuteCommand(std::vector<std::string>);
+
+/**
+ * Prints error message for invalid commands.
+ */
+void PrintInvalidCommandError();
+
 #endif
