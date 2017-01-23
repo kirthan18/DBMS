@@ -9,6 +9,16 @@
 /Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/wl.cpp
 iostream
 -
+vector
+-
+fstream
+-
+wl.h
+/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/wl.h
+
+/Users/kirthanaaraghuraman/Documents/CS564/DBMS/Word Locator/wl.h
+vector
+-
 string
 -
 
