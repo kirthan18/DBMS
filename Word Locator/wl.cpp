@@ -48,9 +48,9 @@ void Trie::InsertWord(string word, unsigned long word_index) {
 
             curr = curr->children[character_index];
         }
+    }
         curr->is_word_end = true;
         curr->word_index.push_back(word_index);
-    }
 }
 
 unsigned long Trie::LocateWord(string word, int occurrence) {
