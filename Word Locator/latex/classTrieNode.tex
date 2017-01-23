@@ -1,0 +1,36 @@
+\hypertarget{classTrieNode}{\section{Trie\-Node Class Reference}
+\label{classTrieNode}\index{Trie\-Node@{Trie\-Node}}
+}
+
+
+{\ttfamily \#include $<$wl.\-h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\-::vector$<$ unsigned long $>$ \hyperlink{classTrieNode_a2f0a51cb24bc20bdc6f368c1fef53e67}{word\-\_\-index}
+\item 
+bool \hyperlink{classTrieNode_a14983627e54ef24a0963d2836755dcaf}{is\-\_\-word\-\_\-end}
+\item 
+\hyperlink{classTrieNode}{Trie\-Node} $\ast$ \hyperlink{classTrieNode_a69ae75c32241f3f6b49f3aad6e6fb6f2}{children} \mbox{[}C\-H\-I\-L\-D\-R\-E\-N\-\_\-\-S\-I\-Z\-E\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class to represent a node in the trie. 
+
+\subsection{Member Data Documentation}
+\hypertarget{classTrieNode_a69ae75c32241f3f6b49f3aad6e6fb6f2}{\index{Trie\-Node@{Trie\-Node}!children@{children}}
+\index{children@{children}!TrieNode@{Trie\-Node}}
+\subsubsection[{children}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Trie\-Node}$\ast$ Trie\-Node\-::children\mbox{[}C\-H\-I\-L\-D\-R\-E\-N\-\_\-\-S\-I\-Z\-E\mbox{]}}}\label{classTrieNode_a69ae75c32241f3f6b49f3aad6e6fb6f2}
+Each node contains an array of pointers of size 37 (10 digits + 26 alphabets + 1 apostrophe). Each child in turn points to successive nodes in the trie. \hypertarget{classTrieNode_a14983627e54ef24a0963d2836755dcaf}{\index{Trie\-Node@{Trie\-Node}!is\-\_\-word\-\_\-end@{is\-\_\-word\-\_\-end}}
+\index{is\-\_\-word\-\_\-end@{is\-\_\-word\-\_\-end}!TrieNode@{Trie\-Node}}
+\subsubsection[{is\-\_\-word\-\_\-end}]{\setlength{\rightskip}{0pt plus 5cm}bool Trie\-Node\-::is\-\_\-word\-\_\-end}}\label{classTrieNode_a14983627e54ef24a0963d2836755dcaf}
+Set to true if there is a word ending with the current character. \hypertarget{classTrieNode_a2f0a51cb24bc20bdc6f368c1fef53e67}{\index{Trie\-Node@{Trie\-Node}!word\-\_\-index@{word\-\_\-index}}
+\index{word\-\_\-index@{word\-\_\-index}!TrieNode@{Trie\-Node}}
+\subsubsection[{word\-\_\-index}]{\setlength{\rightskip}{0pt plus 5cm}std\-::vector$<$unsigned long$>$ Trie\-Node\-::word\-\_\-index}}\label{classTrieNode_a2f0a51cb24bc20bdc6f368c1fef53e67}
+Vector consisting of positions of words in the file. 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+wl.\-h\end{DoxyCompactItemize}

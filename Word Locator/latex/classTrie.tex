@@ -1,0 +1,104 @@
+\hypertarget{classTrie}{\section{Trie Class Reference}
+\label{classTrie}\index{Trie@{Trie}}
+}
+
+
+{\ttfamily \#include $<$wl.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classTrie_a6af57e9f25d0d0a2d59eea5a4a802908}{Trie} ()
+\item 
+\hyperlink{classTrie_abf9d6f48d556e09d1b292412df153a4b}{$\sim$\-Trie} ()
+\item 
+\hyperlink{classTrieNode}{Trie\-Node} $\ast$ \hyperlink{classTrie_a83e327147b935fd0d767fec4be38003e}{Get\-Root\-Node} ()
+\item 
+\hyperlink{classTrieNode}{Trie\-Node} $\ast$ \hyperlink{classTrie_ab37aade00b97d03637287e74fb73ca00}{Get\-Trie\-Node} ()
+\item 
+void \hyperlink{classTrie_a960ae86ba5e1b78eac1701156e0533e3}{Insert\-Word} (std\-::string word, unsigned long word\-\_\-index)
+\item 
+unsigned long \hyperlink{classTrie_a7864cf9ba135aec75760d84b65c94969}{Locate\-Word} (std\-::string word, int occurrence)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class describing a \hyperlink{classTrie}{Trie} and all the operations to be performed on it. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classTrie_a6af57e9f25d0d0a2d59eea5a4a802908}{\index{Trie@{Trie}!Trie@{Trie}}
+\index{Trie@{Trie}!Trie@{Trie}}
+\subsubsection[{Trie}]{\setlength{\rightskip}{0pt plus 5cm}Trie\-::\-Trie (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTrie_a6af57e9f25d0d0a2d59eea5a4a802908}
+Constructor for \hyperlink{classTrie}{Trie} class. \hypertarget{classTrie_abf9d6f48d556e09d1b292412df153a4b}{\index{Trie@{Trie}!$\sim$\-Trie@{$\sim$\-Trie}}
+\index{$\sim$\-Trie@{$\sim$\-Trie}!Trie@{Trie}}
+\subsubsection[{$\sim$\-Trie}]{\setlength{\rightskip}{0pt plus 5cm}Trie\-::$\sim$\-Trie (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTrie_abf9d6f48d556e09d1b292412df153a4b}
+Destructor for \hyperlink{classTrie}{Trie} class. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classTrie_a83e327147b935fd0d767fec4be38003e}{\index{Trie@{Trie}!Get\-Root\-Node@{Get\-Root\-Node}}
+\index{Get\-Root\-Node@{Get\-Root\-Node}!Trie@{Trie}}
+\subsubsection[{Get\-Root\-Node}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Trie\-Node} $\ast$ Trie\-::\-Get\-Root\-Node (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTrie_a83e327147b935fd0d767fec4be38003e}
+Returns the reference to the root of the trie. \begin{DoxyReturn}{Returns}
+Reference to root node of trie. 
+\end{DoxyReturn}
+\hypertarget{classTrie_ab37aade00b97d03637287e74fb73ca00}{\index{Trie@{Trie}!Get\-Trie\-Node@{Get\-Trie\-Node}}
+\index{Get\-Trie\-Node@{Get\-Trie\-Node}!Trie@{Trie}}
+\subsubsection[{Get\-Trie\-Node}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Trie\-Node} $\ast$ Trie\-::\-Get\-Trie\-Node (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTrie_ab37aade00b97d03637287e74fb73ca00}
+Creates a new \hyperlink{classTrie}{Trie} node and initializes its child pointers to N\-U\-L\-L. \begin{DoxyReturn}{Returns}
+Reference to initialized trie node. 
+\end{DoxyReturn}
+\hypertarget{classTrie_a960ae86ba5e1b78eac1701156e0533e3}{\index{Trie@{Trie}!Insert\-Word@{Insert\-Word}}
+\index{Insert\-Word@{Insert\-Word}!Trie@{Trie}}
+\subsubsection[{Insert\-Word}]{\setlength{\rightskip}{0pt plus 5cm}void Trie\-::\-Insert\-Word (
+\begin{DoxyParamCaption}
+\item[{std\-::string}]{word, }
+\item[{unsigned long}]{word\-\_\-index}
+\end{DoxyParamCaption}
+)}}\label{classTrie_a960ae86ba5e1b78eac1701156e0533e3}
+Inserts a word in the trie along with its word index in the file. 
+\begin{DoxyParams}{Parameters}
+{\em word} & Word to be inserted. \\
+\hline
+{\em word\-\_\-index} & Index of the word in the file. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classTrie_a7864cf9ba135aec75760d84b65c94969}{\index{Trie@{Trie}!Locate\-Word@{Locate\-Word}}
+\index{Locate\-Word@{Locate\-Word}!Trie@{Trie}}
+\subsubsection[{Locate\-Word}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long Trie\-::\-Locate\-Word (
+\begin{DoxyParamCaption}
+\item[{std\-::string}]{word, }
+\item[{int}]{occurrence}
+\end{DoxyParamCaption}
+)}}\label{classTrie_a7864cf9ba135aec75760d84b65c94969}
+Locates a word's occurrence in the trie. 
+\begin{DoxyParams}{Parameters}
+{\em word} & Word to be located. \\
+\hline
+{\em occurrence} & Occurrence of the word to be located. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+0 if the word is not present, the index of the word in file if present. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+wl.\-h\item 
+wl.\-cpp\end{DoxyCompactItemize}
