@@ -17,8 +17,6 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CS564.dir/CXX.includecache" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CS564.dir/CXX.includecache" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CS564.dir/depend.internal" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CS564.dir/depend.internal" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CS564.dir/depend.make" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CS564.dir/depend.make" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wl.cpp" afterPath="$PROJECT_DIR$/wl.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wl.h" afterPath="$PROJECT_DIR$/wl.h" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -37,8 +35,8 @@
       <file leaf-file-name="wl.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/wl.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="132">
-              <caret line="125" column="42" lean-forward="false" selection-start-line="125" selection-start-column="42" selection-end-line="125" selection-end-column="42" />
+            <state relative-caret-position="117">
+              <caret line="124" column="39" lean-forward="true" selection-start-line="124" selection-start-column="39" selection-end-line="124" selection-end-column="39" />
               <folding>
                 <element signature="e#159#178#0" expanded="true" />
               </folding>
@@ -354,7 +352,7 @@
       <workItem from="1484931921679" duration="327000" />
       <workItem from="1485013818286" duration="6975000" />
       <workItem from="1485100731489" duration="9261000" />
-      <workItem from="1485208003619" duration="1767000" />
+      <workItem from="1485208003619" duration="1792000" />
     </task>
     <task id="LOCAL-00001" summary="Updated Readme">
       <created>1484756579649</created>
@@ -384,11 +382,18 @@
       <option name="project" value="LOCAL" />
       <updated>1485020767158</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="1) Added classes for Trie and Trie nodes&#10;2) Added insert and locate functions &#10;3) Added comments">
+      <created>1485210262757</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1485210262757</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="19229000" />
+    <option name="totallyTimeSpent" value="19254000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -727,8 +732,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/wl.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="132">
-          <caret line="125" column="42" lean-forward="false" selection-start-line="125" selection-start-column="42" selection-end-line="125" selection-end-column="42" />
+        <state relative-caret-position="117">
+          <caret line="124" column="39" lean-forward="true" selection-start-line="124" selection-start-column="39" selection-end-line="124" selection-end-column="39" />
           <folding>
             <element signature="e#159#178#0" expanded="true" />
           </folding>
