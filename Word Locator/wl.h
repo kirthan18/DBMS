@@ -120,7 +120,7 @@ public:
      * @param occurrence Occurrence of the word to be located.
      * @return 0 if the word is not present, the index of the word in file if present.
      */
-    unsigned long LocateWord(std::string word, int occurrence);
+    unsigned long LocateWord(std::string word, unsigned int occurrence);
 };
 
 /**

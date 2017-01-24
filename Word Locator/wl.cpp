@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 #include "wl.h"
 
 using namespace std;
@@ -38,7 +39,7 @@ void Trie::InsertWord(string word, unsigned long word_index) {
     unsigned long word_length = word.length();
     TrieNode *curr = root;
 
-    for (int i = 0; i < word_length; i++) {
+    for (unsigned int i = 0; i < word_length; i++) {
         int character_index = GetCharacterChildIndex(tolower(word[i]));
 
         if (character_index != -1) {
@@ -53,13 +54,13 @@ void Trie::InsertWord(string word, unsigned long word_index) {
         curr->word_index.push_back(word_index);
 }
 
-unsigned long Trie::LocateWord(string word, int occurrence) {
+unsigned long Trie::LocateWord(string word, unsigned int occurrence) {
     unsigned long word_index = 0;
     unsigned long word_length = word.length();
 
     TrieNode *curr = trie->GetRootNode();
     if (curr != NULL) {
-        for (int i = 0; i < word_length; i++) {
+        for (int unsigned i = 0; i < word_length; i++) {
             int character_index = GetCharacterChildIndex(tolower(word[i]));
 
             //TODO - Check this case with the TAs
@@ -115,7 +116,8 @@ vector<string> ParseCommand(string command) {
 
     vector<string> command_word_list;
 
-    for (char &c : command) {
+    for (unsigned int i = 0; i < command.length(); i++) {
+        char c = command[i];
         if (c == ' ' || index == command.length() - 1) {
             string word;
 
@@ -167,7 +169,7 @@ void ValidateAndExecuteCommand(vector<string> parsed_command) {
             return;
         }
         trie = new Trie();
-        cout << "Cleared memory." << endl;
+        //cout << "Cleared memory." << endl;
 
     } else if (command == "end") {
 
@@ -187,18 +189,25 @@ void ValidateAndExecuteCommand(vector<string> parsed_command) {
             return;
         }
 
-        for (char &c : parsed_command.at(2)) {
+        for (unsigned int k = 0; k < parsed_command.at(2).length(); k++) {
+            char c = parsed_command.at(2)[k];
             if (!isdigit(c)) {
                 PrintInvalidCommandError();
                 return;
             }
         }
         occurence_to_locate = atoi(parsed_command.at(2).c_str());
+
+        if (occurence_to_locate < 1) {
+            PrintInvalidCommandError();
+            return;
+        }
+
         word_to_locate = parsed_command.at(1);
         transform(word_to_locate.begin(), word_to_locate.end(), word_to_locate.begin(), ::tolower);
 
-        cout << "Occurence to locate : " << occurence_to_locate << endl;
-        cout << "Word to locate : " << word_to_locate << endl;
+        //cout << "Occurence to locate : " << occurence_to_locate << endl;
+        //cout << "Word to locate : " << word_to_locate << endl;
 
         unsigned long word_index = trie->LocateWord(word_to_locate, occurence_to_locate);
 
@@ -220,8 +229,8 @@ void ValidateAndExecuteCommand(vector<string> parsed_command) {
 
         file = parsed_command.at(1);
 
-        cout << "File to load : " << file << endl;
-        input.open(file);
+        //cout << "File to load : " << file << endl;
+        input.open(file.c_str());
         if (input.is_open()) {
             trie = new Trie();
             string word;
@@ -231,7 +240,7 @@ void ValidateAndExecuteCommand(vector<string> parsed_command) {
                     input >> word;
                     trie->InsertWord(word, word_index);
                     word_index++;
-                    cout << "Word read : " << word << endl;
+                    //cout << "Word read : " << word << endl;
                 }
             }
         } else {
@@ -254,13 +263,13 @@ int main() {
     while (1) {
         cout << ">";
         getline(cin, command);
-        cout << "Entered command : " << command << endl;
+        //cout << "Entered command : " << command << endl;
 
         vector<string> parsed_command = ParseCommand(command);
-        cout << "Parsed command vector size : " << parsed_command.size() << endl;
-        for (int i = 0; i < parsed_command.size(); i++) {
+        //cout << "Parsed command vector size : " << parsed_command.size() << endl;
+        /* for (unsigned int i = 0; i < parsed_command.size(); i++) {
             cout << "Word: " << parsed_command.at(i) << "\tLength : " << parsed_command.at(i).length() << endl;
-        }
+        } */
         ValidateAndExecuteCommand(parsed_command);
     }
 }
