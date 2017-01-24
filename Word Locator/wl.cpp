@@ -19,8 +19,10 @@ Trie::Trie() {
 }
 
 Trie::~Trie() {
-    //TODO Write code for clearing all nodes recursively
-    delete root;
+    if (root != NULL) {
+        DeleteChildren(root);
+        delete root;
+    }
 }
 
 TrieNode *Trie::GetRootNode() {
@@ -33,6 +35,19 @@ TrieNode *Trie::GetTrieNode() {
         node->children[i] = NULL;
     }
     return node;
+}
+
+void Trie:: DeleteChildren(TrieNode* node) {
+    if (node == NULL) {
+        return;
+    }
+
+    for (unsigned int i = 0; i < CHILDREN_SIZE; i++) {
+        if (node->children[i] != NULL) {
+            DeleteChildren(node->children[i]);
+            node->children[i] = NULL;
+        }
+    }
 }
 
 void Trie::InsertWord(string word, unsigned long word_index) {
@@ -176,6 +191,7 @@ void ValidateAndExecuteCommand(vector<string> parsed_command) {
         if (parsed_command.size() != 1) {
             PrintInvalidCommandError();
         }
+
 
         delete trie;
         exit(1);

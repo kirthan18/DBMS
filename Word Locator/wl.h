@@ -121,6 +121,12 @@ public:
      * @return 0 if the word is not present, the index of the word in file if present.
      */
     unsigned long LocateWord(std::string word, unsigned int occurrence);
+
+    /**
+     * Recursively clears memory of all nodes in the trie.
+     * @param node Root node of the trie to be cleared.
+     */
+    void DeleteChildren(TrieNode *node);
 };
 
 /**
