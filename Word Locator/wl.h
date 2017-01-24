@@ -1,7 +1,8 @@
 //
 // File: wl.h
 //
-//  Description: Add stuff here ...
+//  Description: Contains class declarations necessary for Trie
+//               Contains function declarations for various functions.
 //  Student Name: Kirthanaa Raghuraman
 //  UW Campus ID: 9073422751
 //  email: kraghuraman@wisc.edu

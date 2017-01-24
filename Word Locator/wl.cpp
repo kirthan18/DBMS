@@ -1,7 +1,7 @@
 //
 // File: wl.cpp
 //
-//  Description: Add stuff here ...
+//  Description: Implements a Trie based data structure to quickly index and locate words and their indexes in file.
 //  Student Name: Kirthanaa Raghuraman
 //  UW Campus ID: 9073422751
 //  email: kraghuraman@wisc.edu
