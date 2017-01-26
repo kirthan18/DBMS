@@ -10,6 +10,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 #include "wl.h"
 
 using namespace std;
@@ -66,7 +67,12 @@ void Trie::InsertWord(string word, unsigned long word_index) {
         }
     }
         curr->is_word_end = true;
-        curr->word_index.push_back(word_index);
+        //curr->word_index.push_back(word_index);
+        string word_index_str;
+        stringstream strstream;
+        strstream << word_index;
+        strstream >> word_index_str;
+        curr->word_index = curr->word_index + word_index_str + " ";
 }
 
 unsigned long Trie::LocateWord(string word, unsigned int occurrence) {
@@ -91,11 +97,13 @@ unsigned long Trie::LocateWord(string word, unsigned int occurrence) {
             }
         }
         if (curr->is_word_end) {
-            if (!curr->word_index.empty() && curr->word_index.size() >= occurrence) {
+            return (unsigned long) GetWordIndex(curr->word_index, occurrence);
+            /*if (!curr->word_index.empty() && curr->word_index.size() >= occurrence) {
                 return curr->word_index[occurrence - 1];
+
             } else {
                 return 0;
-            }
+            }*/
         } else {
             return 0;
         }
@@ -105,6 +113,32 @@ unsigned long Trie::LocateWord(string word, unsigned int occurrence) {
 
 }
 
+
+int GetWordIndex(string word_index, unsigned int occurrence) {
+    int index_not_present = 0;
+    unsigned int word_occurence = 0;
+    unsigned int first_index = 0;
+    unsigned int last_index = 0;
+
+    if (word_index.empty()) {
+        return index_not_present;
+    }
+
+    for (unsigned int i = 0; i < word_index.length(); i++) {
+        if (word_index[i] == ' ') {
+            word_occurence++;
+            last_index = i - 1;
+
+            if (word_occurence == occurrence) {
+                return atoi(word_index.substr(first_index, last_index - first_index + 1).c_str());
+            } else {
+                first_index = i + 1;
+                last_index = i + 1;
+            }
+        }
+    }
+    return index_not_present;
+}
 
 void PrintInvalidCommandError() {
     cout << INVALID_COMMAND << endl;

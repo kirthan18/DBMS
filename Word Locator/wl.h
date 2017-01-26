@@ -54,6 +54,14 @@ void PrintInvalidCommandError();
 int GetCharacterChildIndex(char c);
 
 /**
+ * Returns the index of the word in file for the given occurrence.
+ * @param word_index Indices of the word in the file separated by space.
+ * @param occurrence Occurrence of the word in file
+ * @return Index of word in file corresponding to the occurrence.
+ */
+int GetWordIndex(std::string word_index, unsigned int occurrence);
+
+/**
  * Class to represent a node in the trie.
  */
 class TrieNode {
@@ -62,7 +70,13 @@ public:
     /**
      * Vector consisting of positions of words in the file.
      */
-    std::vector<unsigned long> word_index;
+    //std::vector<unsigned long> word_index;
+
+    /**
+     * A string containing the indexes of the word in the file.
+     * Each index is separated by a space.
+     */
+    std::string word_index;
 
     /**
      * Set to true if there is a word ending with the current character.
