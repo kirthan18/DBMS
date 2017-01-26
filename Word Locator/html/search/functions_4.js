@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7etrie',['~Trie',['../classTrie.html#abf9d6f48d556e09d1b292412df153a4b',1,'Trie']]]
+  ['trie',['Trie',['../classTrie.html#a6af57e9f25d0d0a2d59eea5a4a802908',1,'Trie']]]
 ];

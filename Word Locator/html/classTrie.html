@@ -104,8 +104,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab37aade00b97d03637287e74fb73ca00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a960ae86ba5e1b78eac1701156e0533e3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTrie.html#a960ae86ba5e1b78eac1701156e0533e3">InsertWord</a> (std::string word, unsigned long word_index)</td></tr>
 <tr class="separator:a960ae86ba5e1b78eac1701156e0533e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7864cf9ba135aec75760d84b65c94969"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTrie.html#a7864cf9ba135aec75760d84b65c94969">LocateWord</a> (std::string word, int occurrence)</td></tr>
-<tr class="separator:a7864cf9ba135aec75760d84b65c94969"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3aae72bf32a26fc8842aa43e203eb89a"><td class="memItemLeft" align="right" valign="top">unsigned long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTrie.html#a3aae72bf32a26fc8842aa43e203eb89a">LocateWord</a> (std::string word, unsigned int occurrence)</td></tr>
+<tr class="separator:a3aae72bf32a26fc8842aa43e203eb89a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc71b946b9b4e3c6d7d17102f8032b0a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTrie.html#afc71b946b9b4e3c6d7d17102f8032b0a">DeleteChildren</a> (<a class="el" href="classTrieNode.html">TrieNode</a> *node)</td></tr>
+<tr class="separator:afc71b946b9b4e3c6d7d17102f8032b0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Class describing a <a class="el" href="classTrie.html">Trie</a> and all the operations to be performed on it. </p>
@@ -143,6 +145,29 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="afc71b946b9b4e3c6d7d17102f8032b0a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Trie::DeleteChildren </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTrieNode.html">TrieNode</a> *&#160;</td>
+          <td class="paramname"><em>node</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Recursively clears memory of all nodes in the trie. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">node</td><td>Root node of the trie to be cleared. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a83e327147b935fd0d767fec4be38003e"></a>
 <div class="memitem">
 <div class="memproto">
@@ -211,7 +236,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a7864cf9ba135aec75760d84b65c94969"></a>
+<a class="anchor" id="a3aae72bf32a26fc8842aa43e203eb89a"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -224,7 +249,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>occurrence</em>&#160;</td>
         </tr>
         <tr>
@@ -253,7 +278,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jan 23 2017 16:38:21 for Word Locator by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Jan 26 2017 12:20:12 for Word Locator by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.6
 </small></address>

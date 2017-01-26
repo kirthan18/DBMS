@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['word_5findex',['word_index',['../classTrieNode.html#a2f0a51cb24bc20bdc6f368c1fef53e67',1,'TrieNode']]]
+  ['word_5findex',['word_index',['../classTrieNode.html#a47dd439e1e4db41bb42fa8d3c696cdae',1,'TrieNode']]]
 ];

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['trie',['Trie',['../classTrie.html',1,'Trie'],['../classTrie.html#a6af57e9f25d0d0a2d59eea5a4a802908',1,'Trie::Trie()']]],
-  ['trienode',['TrieNode',['../classTrieNode.html',1,'']]]
+  ['locateword',['LocateWord',['../classTrie.html#a3aae72bf32a26fc8842aa43e203eb89a',1,'Trie']]]
 ];

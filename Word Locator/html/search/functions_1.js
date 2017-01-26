@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['insertword',['InsertWord',['../classTrie.html#a960ae86ba5e1b78eac1701156e0533e3',1,'Trie']]]
+  ['getrootnode',['GetRootNode',['../classTrie.html#a83e327147b935fd0d767fec4be38003e',1,'Trie']]],
+  ['gettrienode',['GetTrieNode',['../classTrie.html#ab37aade00b97d03637287e74fb73ca00',1,'Trie']]]
 ];

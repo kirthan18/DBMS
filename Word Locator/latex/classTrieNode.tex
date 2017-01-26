@@ -8,7 +8,7 @@
 \subsection*{Public Attributes}
 \begin{DoxyCompactItemize}
 \item 
-std\-::vector$<$ unsigned long $>$ \hyperlink{classTrieNode_a2f0a51cb24bc20bdc6f368c1fef53e67}{word\-\_\-index}
+std\-::string \hyperlink{classTrieNode_a47dd439e1e4db41bb42fa8d3c696cdae}{word\-\_\-index}
 \item 
 bool \hyperlink{classTrieNode_a14983627e54ef24a0963d2836755dcaf}{is\-\_\-word\-\_\-end}
 \item 
@@ -26,10 +26,10 @@ Class to represent a node in the trie.
 Each node contains an array of pointers of size 37 (10 digits + 26 alphabets + 1 apostrophe). Each child in turn points to successive nodes in the trie. \hypertarget{classTrieNode_a14983627e54ef24a0963d2836755dcaf}{\index{Trie\-Node@{Trie\-Node}!is\-\_\-word\-\_\-end@{is\-\_\-word\-\_\-end}}
 \index{is\-\_\-word\-\_\-end@{is\-\_\-word\-\_\-end}!TrieNode@{Trie\-Node}}
 \subsubsection[{is\-\_\-word\-\_\-end}]{\setlength{\rightskip}{0pt plus 5cm}bool Trie\-Node\-::is\-\_\-word\-\_\-end}}\label{classTrieNode_a14983627e54ef24a0963d2836755dcaf}
-Set to true if there is a word ending with the current character. \hypertarget{classTrieNode_a2f0a51cb24bc20bdc6f368c1fef53e67}{\index{Trie\-Node@{Trie\-Node}!word\-\_\-index@{word\-\_\-index}}
+Set to true if there is a word ending with the current character. \hypertarget{classTrieNode_a47dd439e1e4db41bb42fa8d3c696cdae}{\index{Trie\-Node@{Trie\-Node}!word\-\_\-index@{word\-\_\-index}}
 \index{word\-\_\-index@{word\-\_\-index}!TrieNode@{Trie\-Node}}
-\subsubsection[{word\-\_\-index}]{\setlength{\rightskip}{0pt plus 5cm}std\-::vector$<$unsigned long$>$ Trie\-Node\-::word\-\_\-index}}\label{classTrieNode_a2f0a51cb24bc20bdc6f368c1fef53e67}
-Vector consisting of positions of words in the file. 
+\subsubsection[{word\-\_\-index}]{\setlength{\rightskip}{0pt plus 5cm}std\-::string Trie\-Node\-::word\-\_\-index}}\label{classTrieNode_a47dd439e1e4db41bb42fa8d3c696cdae}
+Vector consisting of positions of words in the file. A string containing the indexes of the word in the file. Each index is separated by a space. 
 
 The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
 \item 

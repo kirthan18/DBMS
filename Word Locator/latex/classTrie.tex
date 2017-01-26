@@ -18,7 +18,9 @@
 \item 
 void \hyperlink{classTrie_a960ae86ba5e1b78eac1701156e0533e3}{Insert\-Word} (std\-::string word, unsigned long word\-\_\-index)
 \item 
-unsigned long \hyperlink{classTrie_a7864cf9ba135aec75760d84b65c94969}{Locate\-Word} (std\-::string word, int occurrence)
+unsigned long \hyperlink{classTrie_a3aae72bf32a26fc8842aa43e203eb89a}{Locate\-Word} (std\-::string word, unsigned int occurrence)
+\item 
+void \hyperlink{classTrie_afc71b946b9b4e3c6d7d17102f8032b0a}{Delete\-Children} (\hyperlink{classTrieNode}{Trie\-Node} $\ast$node)
 \end{DoxyCompactItemize}
 
 
@@ -43,6 +45,18 @@ Constructor for \hyperlink{classTrie}{Trie} class. \hypertarget{classTrie_abf9d6
 Destructor for \hyperlink{classTrie}{Trie} class. 
 
 \subsection{Member Function Documentation}
+\hypertarget{classTrie_afc71b946b9b4e3c6d7d17102f8032b0a}{\index{Trie@{Trie}!Delete\-Children@{Delete\-Children}}
+\index{Delete\-Children@{Delete\-Children}!Trie@{Trie}}
+\subsubsection[{Delete\-Children}]{\setlength{\rightskip}{0pt plus 5cm}void Trie\-::\-Delete\-Children (
+\begin{DoxyParamCaption}
+\item[{{\bf Trie\-Node} $\ast$}]{node}
+\end{DoxyParamCaption}
+)}}\label{classTrie_afc71b946b9b4e3c6d7d17102f8032b0a}
+Recursively clears memory of all nodes in the trie. 
+\begin{DoxyParams}{Parameters}
+{\em node} & Root node of the trie to be cleared. \\
+\hline
+\end{DoxyParams}
 \hypertarget{classTrie_a83e327147b935fd0d767fec4be38003e}{\index{Trie@{Trie}!Get\-Root\-Node@{Get\-Root\-Node}}
 \index{Get\-Root\-Node@{Get\-Root\-Node}!Trie@{Trie}}
 \subsubsection[{Get\-Root\-Node}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Trie\-Node} $\ast$ Trie\-::\-Get\-Root\-Node (
@@ -78,14 +92,14 @@ Inserts a word in the trie along with its word index in the file.
 {\em word\-\_\-index} & Index of the word in the file. \\
 \hline
 \end{DoxyParams}
-\hypertarget{classTrie_a7864cf9ba135aec75760d84b65c94969}{\index{Trie@{Trie}!Locate\-Word@{Locate\-Word}}
+\hypertarget{classTrie_a3aae72bf32a26fc8842aa43e203eb89a}{\index{Trie@{Trie}!Locate\-Word@{Locate\-Word}}
 \index{Locate\-Word@{Locate\-Word}!Trie@{Trie}}
 \subsubsection[{Locate\-Word}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long Trie\-::\-Locate\-Word (
 \begin{DoxyParamCaption}
 \item[{std\-::string}]{word, }
-\item[{int}]{occurrence}
+\item[{unsigned int}]{occurrence}
 \end{DoxyParamCaption}
-)}}\label{classTrie_a7864cf9ba135aec75760d84b65c94969}
+)}}\label{classTrie_a3aae72bf32a26fc8842aa43e203eb89a}
 Locates a word's occurrence in the trie. 
 \begin{DoxyParams}{Parameters}
 {\em word} & Word to be located. \\
