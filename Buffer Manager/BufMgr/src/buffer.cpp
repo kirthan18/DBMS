@@ -84,18 +84,31 @@ void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty)
         } else {
             bufDescTable[frameId].pinCnt--;
 
-            //TODO - check how to set dirty parameter
-            /*if (bufDescTable[frameId].dirty) {
-                dirty = true;
+            if (dirty) {
+                bufDescTable[frameId].dirty = true;
             } else {
-                dirty = false;
-            }*/
+                bufDescTable[frameId].dirty = false;
+            }
         }
     }
 }
 
 void BufMgr::flushFile(const File* file)
 {
+    for (uint32_t = 0; i < numBufs; i++) {
+        if (bufDescTable[i].valid) {
+            if (bufDescTable[i].file == file) {
+                if (bufDescTable[i].dirty) {
+                    file->writePage(bufDescTable[i].pageNo);
+                    bufDescTable[i].dirty = false;
+                }
+                hashTable->remove(file,bufDescTable[i].pageNo);
+                bufDescTable[i].Clear();
+            }
+        } else {
+            //TODO - throw BadBufferException
+        }
+    }
 }
 
 void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
@@ -110,7 +123,15 @@ void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page)
 
 void BufMgr::disposePage(File* file, const PageId PageNo)
 {
+    FrameId  frameId = 0;
 
+    hashTable->lookup(file, PageNo, frameId);
+    if (frameId <=0 || frameId > numBufs) {
+        delete (bufDescTable+frameId);
+        hashTable->remove(file, PageNo);
+
+        file->deletePage(PageNo);
+    }
 }
 
 void BufMgr::printSelf(void)
