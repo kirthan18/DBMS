@@ -70,7 +70,7 @@ struct FileHeader {
  *
  * @warning This class is not threadsafe.
  */
-class File {
+class   File {
  public:
   /**
    * Creates a new file.

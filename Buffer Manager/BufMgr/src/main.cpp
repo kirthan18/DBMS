@@ -22,7 +22,7 @@
 
 using namespace badgerdb;
 
-const PageId num = 100;
+const PageId 	num = 100;
 PageId pid[num], pageno1, pageno2, pageno3, i;
 RecordId rid[num], rid2, rid3;
 Page *page, *page2, *page3;
