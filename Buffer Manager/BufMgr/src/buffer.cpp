@@ -48,22 +48,46 @@ namespace badgerdb {
     }
 
     void BufMgr::allocBuf(FrameId &frame) {
-        //Advance clock pointer
 
-        //Check if valid bit is set
+        bool all_pages_pinned = true;
+        int i = 0;
 
-        //If valid bit is set, Check if ref bit is set
-        //If ref bit is set, set it to false and move on
-        //If ref bit is not srt, check if page is pinned
-        //If page is pinned, move on
-        //If page is not pinned, check if dirty bit is set
-        //If dirty bit is set, flush disk to page
-        //Call Set() on the frame
+        while(1) {
 
-        //If valid bit is not set, call Set() on the frame
-
-        clockHand++;
-        
+            if (i == numBufs && all_pages_pinned) {
+                throw BufferExceededException();
+            }
+            //Advance clock pointer
+            clockHand++;
+            i++;
+            //Check if valid bit is set
+            if (bufDescTable[clockHand].valid) {
+                //If valid bit is set, Check if ref bit is set
+                if (bufDescTable[clockHand].refbit) {
+                    //If ref bit is set, set it to false and move on
+                    bufDescTable[clockHand].refbit = false;
+                    continue;
+                } else {
+                    //If ref bit is not srt, check if page is pinned
+                    if (bufDescTable[clockHand].pinCnt != 0) {
+                        //If page is pinned, move on
+                        all_pages_pinned = false;
+                        continue;
+                    } else {
+                        //If page is not pinned, check if dirty bit is set
+                        if (bufDescTable[clockHand].dirty) {
+                            //If dirty bit is set, flush disk to page
+                            bufDescTable[clockHand].file->writePage(bufDescTable[clockHand].pageNo);
+                        }
+                        frame = clockHand;
+                        return;
+                    }
+                }
+            } else {
+                frame = clockHand;
+                return;
+            }
+        }
     }
 
 
