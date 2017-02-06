@@ -48,6 +48,21 @@ namespace badgerdb {
     }
 
     void BufMgr::allocBuf(FrameId &frame) {
+        //Advance clock pointer
+
+        //Check if valid bit is set
+
+        //If valid bit is set, Check if ref bit is set
+        //If ref bit is set, set it to false and move on
+        //If ref bit is not srt, check if page is pinned
+        //If page is pinned, move on
+        //If page is not pinned, check if dirty bit is set
+        //If dirty bit is set, flush disk to page
+        //Call Set() on the frame
+
+        //If valid bit is not set, call Set() on the frame
+
+        clockHand++;
         
     }
 
