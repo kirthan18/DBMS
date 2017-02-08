@@ -104,6 +104,7 @@ namespace badgerdb {
                     }
                     frame = clockHand;
                     bufDescTable[clockHand].Clear();
+                    std::cout<<"Frame number being set to " << clockHand << std::endl;
                     return;
                 }
             }
@@ -113,11 +114,14 @@ namespace badgerdb {
 
     void BufMgr::readPage(File *file, const PageId pageNo, Page *&page) {
         FrameId frameNumber;
+        std::cout << "Looking for file " << file->filename() << " and page number " << pageNo << std::endl;
 
         if (hashTable->lookup(file, pageNo, frameNumber)) {
             //Page is in the buffer pool frame
 
-            std::cout <<"Page is in the buffer pool frame" << std::endl;
+            std::cout <<"Page is in the buffer pool frame number " << frameNumber<< std::endl;
+            std::cout <<"Page number : " << bufDescTable[frameNumber].pageNo <<std::endl;
+            std::cout <<"File name : " << bufDescTable[frameNumber].file->filename() <<std::endl;
             bufDescTable[frameNumber].refbit = true;
             bufDescTable[frameNumber].pinCnt++;
             page = &bufPool[frameNumber];
