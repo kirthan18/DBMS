@@ -56,14 +56,6 @@ namespace badgerdb {
         delete [] bufDescTable;
         delete [] bufPool;
         delete hashTable;
-//        for (uint32_t i = 0; i < numBufs; i++) {
-//            if (bufDescTable[i].dirty) {
-//                flushFile(bufDescTable[i].file);
-//            }
-//        }
-//
-//        delete[] bufDescTable;
-//        delete[] bufPool;
     }
 
     void BufMgr::advanceClock() {
@@ -172,25 +164,38 @@ namespace badgerdb {
 
 
     void BufMgr::readPage(File *file, const PageId pageNo, Page *&page) {
-        FrameId frameNo;
+        FrameId frameNumber;
 
-        if (hashTable->lookup(file, pageNo, frameNo)) {
-            // Case 2: Page is in the buffer pool
-            bufDescTable[frameNo].refbit = true;
-            bufDescTable[frameNo].pinCnt++;
-            // "Return a pointer to the frame containing the page via the page parameter"
+        if (hashTable->lookup(file, pageNo, frameNumber)) {
+            //Page is in the buffer pool frame
+            bufDescTable[frameNumber].refbit = true;
+            bufDescTable[frameNumber].pinCnt++;
+            page = &bufPool[frameNumber];
 
-            page = &bufPool[frameNo];
         } else {
-            // Case 1: Page is not in the buffer pool
-            allocBuf(frameNo);
-            bufStats.diskreads++;
-            bufPool[frameNo] = file->readPage(pageNo);
-            bufDescTable[frameNo].Set(file, pageNo);
-            //bufDescTable[frameNo].refbit = true;
-            // "Return a pointer to the frame containing the page via the page parameter"
-            page = &bufPool[frameNo];
-            hashTable->insert(file, pageNo, frameNo);
+            //Page not found in buffer pool
+
+            //Call allocBuf() to allocate a buffer frame
+            allocBuf(frameNumber);
+
+            //Call file->readPage() to read the page from file into the buffer pool frame
+            bufPool[frameNumber] = file->readPage(pageNo);
+
+            std::cout << "Allocated buffer frame : " << frameNumber;
+
+            //Insert the page into the hash table
+            try {
+                hashTable->insert(file, pageNo, frameNumber);
+            } catch (HashAlreadyPresentException e) {
+                return;
+            } catch (HashTableException hashTableException) {
+                return;
+            }
+            //Invoke Set()
+            bufDescTable[frameNumber].Set(file, pageNo);
+
+            //Return pointer to frame containing the page via the page parameter
+            page = &bufPool[frameNumber];
         }
     }
 
@@ -219,7 +224,6 @@ namespace badgerdb {
                                                   bufDescTable[i].frameNo);
                     }
                     if (bufDescTable[i].dirty) {
-                        //TODO - check this
                         bufDescTable[i].file->writePage(bufPool[bufDescTable[i].frameNo]);
                         bufDescTable[i].dirty = false;
                     }
@@ -243,11 +247,7 @@ namespace badgerdb {
 
         allocBuf(frameId);
 
-        try {
-            allocated_page = file->allocatePage();
-        } catch (InvalidPageException e) {
-            return;
-        }
+        allocated_page = file->allocatePage();
 
         std::cout << "%%%In Alloc page() - Frame number allocated for " << file->filename() << " and page number " << allocated_page.page_number() <<" is " << frameId << std::endl;
         bufPool[frameId] = allocated_page;
