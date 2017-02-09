@@ -74,6 +74,7 @@ bool BufHashTbl::lookup(const File* file, const PageId pageNo, FrameId &frameNo)
   while (tmpBuc) {
     if (tmpBuc->file == file && tmpBuc->pageNo == pageNo)
     {
+      //std::cout << "***In Lookup: file name = " << file->filename() << " Page number = " << tmpBuc->pageNo << std::endl;
       frameNo = tmpBuc->frameNo; // 'return' frameNo by reference
       return true;
     }
