@@ -41,14 +41,15 @@ namespace badgerdb {
 
 
     BufMgr::~BufMgr() {
-        for(FrameId i = 0; i < numBufs; i++){
+        //Loop through each buffer frame
+        //If it has dirty pages, flush those pages to disk
+        //Delete all book keeping and allocation data structures
+        for(uint32_t i = 0; i < numBufs; i++){
             while(bufDescTable[i].valid){
-                if(bufDescTable[i].dirty == true){
-                    //flushes out dirty bit
+                //Before clearing the memory check if page is dirty
+                if(bufDescTable[i].dirty){
                     bufDescTable[i].file -> writePage(bufPool[bufDescTable[i].frameNo]);
                     bufDescTable[i].dirty = false;
-                }
-                else { //enters else only if bufPool[i] is accurate with memory. then deallocates bufpool
                 }
             }
         }
@@ -64,54 +65,58 @@ namespace badgerdb {
 
     void BufMgr::allocBuf(FrameId &frame) {
         //printSelf();
-        std::uint32_t scannedNum= 0;
-        bool foundbuffer = false;
+        uint32_t i = 0;
+        bool is_frame_found = false;
 
-
-        while (scannedNum <= numBufs) {
-            scannedNum++;
-            //advance the clock
+        while (i <= numBufs) {
+            i++;
             advanceClock();
-            //check if buffer is valid (if already has file), if not use the buffer
-            if (bufDescTable[clockHand].valid == false) {
-                foundbuffer = true;
-                break;
-            }
 
-                //if it has been recently referenced, reset refbit and continue.
-            else if(bufDescTable[clockHand].refbit == true) {
+            if (!bufDescTable[clockHand].valid) {
+                is_frame_found = true;
+                break;
+            }else if (bufDescTable[clockHand].refbit) {
                 bufDescTable[clockHand].refbit = false;
                 continue;
-            }
-            else if(bufDescTable[clockHand].pinCnt > 0 ) {
+            } else if (bufDescTable[clockHand].pinCnt != 0) {
                 continue;
-            }
-            else { // use the page, writing to disk if dirty
-                foundbuffer = true;
-                //page is valid, so remove from hashtable
-                hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
-                if(bufDescTable[clockHand].dirty == true) {
-                    //std::cout << "Replacing Page: " << bufDescTable[clockHand].pageNo << "\n";
+            } else {
+                /*
+                 * Control comes here in 2 cases
+                 * 1) When refbit is set to false
+                 * 2) When pin count is 0
+                 */
+
+                 is_frame_found = true;
+
+                //Check if the page in the frame is dirty
+                if (bufDescTable[clockHand].dirty) {
+                    //Write the dirty page to disk
                     bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
-                    bufDescTable[clockHand].dirty= false;
+                    bufDescTable[clockHand].dirty = false;
                 }
+                hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
                 break;
             }
         }
 
-        if (!foundbuffer && scannedNum > numBufs) {
+        if (i > numBufs && !is_frame_found) {
             throw BufferExceededException();
         }
 
+        //Call clear on the allotted frame to reset the bits
         bufDescTable[clockHand].Clear();
+        //Set the value of the frame number
 
         frame=bufDescTable[clockHand].frameNo;
-        /*bool all_pages_pinned = true;
+
+
+        /* bool all_pages_pinned = true;
         uint32_t i = 0;
         std::cout << "Clock hand : " << clockHand << std::endl;
         while (i <= numBufs) {
 
-            if (i == numBufs && all_pages_pinned) {
+            if (i > numBufs && all_pages_pinned) {
                 throw BufferExceededException();
             }
             //Advance clock pointer
