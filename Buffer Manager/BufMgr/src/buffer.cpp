@@ -19,7 +19,6 @@
 #include "exceptions/hash_table_exception.h"
 
 
-
 namespace badgerdb {
 
     BufMgr::BufMgr(std::uint32_t bufs)
@@ -44,18 +43,18 @@ namespace badgerdb {
         //Loop through each buffer frame
         //If it has dirty pages, flush those pages to disk
         //Delete all book keeping and allocation data structures
-        for(uint32_t i = 0; i < numBufs; i++){
-            while(bufDescTable[i].valid){
+        for (uint32_t i = 0; i < numBufs; i++) {
+            while (bufDescTable[i].valid) {
                 //Before clearing the memory check if page is dirty
-                if(bufDescTable[i].dirty){
-                    bufDescTable[i].file -> writePage(bufPool[bufDescTable[i].frameNo]);
+                if (bufDescTable[i].dirty) {
+                    bufDescTable[i].file->writePage(bufPool[bufDescTable[i].frameNo]);
                     bufDescTable[i].dirty = false;
                 }
             }
         }
 
-        delete [] bufDescTable;
-        delete [] bufPool;
+        delete[] bufDescTable;
+        delete[] bufPool;
         delete hashTable;
     }
 
@@ -65,20 +64,26 @@ namespace badgerdb {
 
     void BufMgr::allocBuf(FrameId &frame) {
         //printSelf();
-        uint32_t i = 0;
+        uint32_t i;
         bool is_frame_found = false;
 
-        while (i <= numBufs) {
-            i++;
+        for (i = 0; i <= numBufs; i++) {
+
+            //Step 1:Advance clock hand
             advanceClock();
 
+            //Check if frame pointed by clock hand is valid
+            //If not, it is available, so break from the loop
             if (!bufDescTable[clockHand].valid) {
                 is_frame_found = true;
                 break;
-            }else if (bufDescTable[clockHand].refbit) {
+            } else if (bufDescTable[clockHand].refbit) {
+                //If the frame is valid check if the ref bit is set
+                //If set, set it to false and continue
                 bufDescTable[clockHand].refbit = false;
                 continue;
             } else if (bufDescTable[clockHand].pinCnt != 0) {
+                //If refbit is false and pin count is not 0, again continue
                 continue;
             } else {
                 /*
@@ -87,84 +92,88 @@ namespace badgerdb {
                  * 2) When pin count is 0
                  */
 
-                 is_frame_found = true;
+                is_frame_found = true;
 
                 //Check if the page in the frame is dirty
                 if (bufDescTable[clockHand].dirty) {
                     //Write the dirty page to disk
                     bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
-                    bufDescTable[clockHand].dirty = false;
+                    //bufDescTable[clockHand].dirty = false;
                 }
+                //Rmeove hash table mapping entry
                 hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
                 break;
             }
         }
 
+        //Check for buffer exceeded exception
         if (i > numBufs && !is_frame_found) {
             throw BufferExceededException();
         }
 
         //Call clear on the allotted frame to reset the bits
         bufDescTable[clockHand].Clear();
-        //Set the value of the frame number
 
-        frame=bufDescTable[clockHand].frameNo;
+        //Set the value of the frame number
+        frame = bufDescTable[clockHand].frameNo;
 
 
         /* bool all_pages_pinned = true;
-        uint32_t i = 0;
-        std::cout << "Clock hand : " << clockHand << std::endl;
-        while (i <= numBufs) {
+         uint32_t i = 0;
+         std::cout << "Clock hand : " << clockHand << std::endl;
+         while (i <= numBufs) {
 
-            if (i > numBufs && all_pages_pinned) {
-                throw BufferExceededException();
-            }
-            //Advance clock pointer
-            advanceClock();
-            std::cout << "Clock hand after advancing: " << clockHand << std::endl;
-            i++;
+ //            if (i > numBufs && all_pages_pinned) {
+ //                throw BufferExceededException();
+ //            }
+             //Advance clock pointer
+             advanceClock();
+             std::cout << "Clock hand after advancing: " << clockHand << std::endl;
+             i++;
 
-            if (!bufDescTable[clockHand].valid) {
-                std::cout << "Frame " << clockHand << " is invalid." << std::endl;
-                frame = clockHand;
-                bufDescTable[clockHand].Clear();
-                return;
-            } else {
-                if (bufDescTable[clockHand].refbit) {
-                    //If ref bit is set, set it to false and move on
-                    std::cout << "Ref bit is set in frame " << clockHand << ". Setting it to false." << std::endl;
-                    bufDescTable[clockHand].refbit = false;
-                } else {
-                    std::cout << "Ref bit is NOT set in frame " << clockHand << "." << std::endl;
-                    if (bufDescTable[clockHand].pinCnt != 0) {
-                        //If page is pinned, move on
-                        std::cout << "Pin count of frame " << clockHand << " is " << bufDescTable[clockHand].pinCnt <<
-                        std::endl;
-                        all_pages_pinned = false;
-                    } else {
-                        //If page is not pinned, check if dirty bit is set
-                        std::cout << "No pages pinned in frame " << clockHand << " ." << std::endl;
-                        if (bufDescTable[clockHand].dirty) {
-                            //If dirty bit is set, flush disk to page
-                            std::cout << "Dirty bit is set in frame " << clockHand << std::endl;
-                            std::cout << "Writing dirty page in frame " << clockHand << " to disk." << std::endl;
-                            bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
-                            bufDescTable[clockHand].dirty = false;
-                        }
-                        std::cout << "Removing hash table entry.." << std::endl;
-                        try {
-                            hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
-                        } catch (HashNotFoundException e) {
-                            return;
-                        }
-                        frame = clockHand;
-                        bufDescTable[clockHand].Clear();
-                        std::cout << "Frame number being set to " << clockHand << std::endl;
-                        return;
-                    }
-                }
-            }
-        }*/
+             if (!bufDescTable[clockHand].valid) {
+                 std::cout << "Frame " << clockHand << " is invalid." << std::endl;
+                 frame = clockHand;
+                 bufDescTable[clockHand].Clear();
+                 return;
+             } else {
+                 if (bufDescTable[clockHand].refbit) {
+                     //If ref bit is set, set it to false and move on
+                     std::cout << "Ref bit is set in frame " << clockHand << ". Setting it to false." << std::endl;
+                     bufDescTable[clockHand].refbit = false;
+                     continue;
+                 } else {
+                     std::cout << "Ref bit is NOT set in frame " << clockHand << "." << std::endl;
+                     if (bufDescTable[clockHand].pinCnt != 0) {
+                         //If page is pinned, move on
+                         std::cout << "Pin count of frame " << clockHand << " is " << bufDescTable[clockHand].pinCnt <<
+                         std::endl;
+                         all_pages_pinned = false;
+                         continue;
+                     } else {
+                         //If page is not pinned, check if dirty bit is set
+                         std::cout << "No pages pinned in frame " << clockHand << " ." << std::endl;
+                         if (bufDescTable[clockHand].dirty) {
+                             //If dirty bit is set, flush disk to page
+                             std::cout << "Dirty bit is set in frame " << clockHand << std::endl;
+                             std::cout << "Writing dirty page in frame " << clockHand << " to disk." << std::endl;
+                             bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
+                             bufDescTable[clockHand].dirty = false;
+                         }0
+                         std::cout << "Removing hash table entry.." << std::endl;
+                         try {
+                             hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+                         } catch (HashNotFoundException e) {
+                             return;
+                         }
+                         frame = clockHand;
+                         bufDescTable[clockHand].Clear();
+                         std::cout << "Frame number being set to " << clockHand << std::endl;
+                         return;
+                     }
+                 }
+             }
+         }*/
     }
 
 
@@ -186,7 +195,7 @@ namespace badgerdb {
             //Call file->readPage() to read the page from file into the buffer pool frame
             bufPool[frameNumber] = file->readPage(pageNo);
 
-            std::cout << "Allocated buffer frame : " << frameNumber;
+            //std::cout << "Allocated buffer frame : " << frameNumber;
 
             //Insert the page into the hash table
             try {
@@ -254,7 +263,7 @@ namespace badgerdb {
 
         allocated_page = file->allocatePage();
 
-        std::cout << "%%%In Alloc page() - Frame number allocated for " << file->filename() << " and page number " << allocated_page.page_number() <<" is " << frameId << std::endl;
+        //std::cout << "%%%In Alloc page() - Frame number allocated for " << file->filename() << " and page number " << allocated_page.page_number() <<" is " << frameId << std::endl;
         bufPool[frameId] = allocated_page;
         try {
             hashTable->insert(file, allocated_page.page_number(), frameId);
