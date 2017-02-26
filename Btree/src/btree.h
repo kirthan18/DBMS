@@ -241,7 +241,7 @@ struct LeafNodeInt{
 
   /**
    * Page number of the leaf on the right side.
-	 * This linking of leaves allows to easily move from one leaf to the next leaf during index scan.
+   * This linking of leaves allows to easily move from one leaf to the next leaf during index scan.
    */
 	PageId rightSibPageNo;
 };
