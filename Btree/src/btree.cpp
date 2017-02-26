@@ -6,16 +6,7 @@
  */
 
 #include "btree.h"
-#include "filescan.h"
 #include "exceptions/bad_index_info_exception.h"
-#include "exceptions/bad_opcodes_exception.h"
-#include "exceptions/bad_scanrange_exception.h"
-#include "exceptions/no_such_key_found_exception.h"
-#include "exceptions/scan_not_initialized_exception.h"
-#include "exceptions/index_scan_completed_exception.h"
-#include "exceptions/file_not_found_exception.h"
-#include "exceptions/end_of_file_exception.h"
-
 
 //#define DEBUG
 
@@ -33,6 +24,89 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 		const Datatype attrType)
 {
 
+    std::ostringstream	idxStr;
+    idxStr	<<	relationName	<<	'.'	<<	attrByteOffset;
+    std::string	indexName	=	idxStr.str();	//	indexName	is	the	name	of	the	index	file
+
+    if (BlobFile::exists(indexName)) {
+        // Index file exists!
+        // Open the file
+        Page *indexPage;
+        Page *rootPage;
+
+        BlobFile blobFile = BlobFile::open(indexName);
+        this->file = &blobFile;
+        this->headerPageNum = blobFile.getFirstPageNo();
+        bufMgrIn->readPage(&blobFile, headerPageNum, indexPage);
+
+        // Read the first page from the file (meta node)
+        PageId  indexPageNo = blobFile.getFirstPageNo();
+        bufMgrIn->readPage(&blobFile, indexPageNo, indexPage);
+        IndexMetaInfo* indexMetaInfo = (IndexMetaInfo*) indexPage;
+
+        // Check for bad index
+        std::string reason = "";
+        if (indexMetaInfo->attrByteOffset != attrByteOffset) {
+            reason = "Attribute Byte offset doesn't match! \n";
+        }
+        if (indexMetaInfo->attrType != attrType) {
+            reason += "Attribute data type doesn't match! \n";
+        }
+
+        if (strcmp(indexMetaInfo->relationName,indexName.c_str()) != 0) {
+            reason += "Relation does not match! \n";
+        }
+        if (!reason.empty()) {
+            throw BadIndexInfoException(reason);
+        }
+
+        // Get Root page number from the meta node
+        this->rootPageNum = indexMetaInfo->rootPageNo;
+
+        // Read the root page
+        bufMgrIn->readPage(&blobFile, rootPageNum, rootPage);
+
+        // Unpin the header page
+        bufMgrIn->unPinPage(&blobFile, headerPageNum, false);
+
+    } else {
+        // Index file doesn't exist!
+
+        // Root page starts at 2
+        PageId rootPageNum = 2;
+
+        // Create a blob file
+        BlobFile blobFile = BlobFile::create(indexName);
+
+        // Allocate new meta page
+        Page *indexMetaPage;
+        PageId headerPageID = 1;
+        bufMgrIn->allocPage(&blobFile, headerPageID, indexMetaPage);
+
+        // Populate IndexMetaInfo object with root page number
+        IndexMetaInfo *indexMetaInfo =  new IndexMetaInfo();
+        std::strcpy(indexMetaInfo->relationName, indexName.c_str());
+        indexMetaInfo->attrType = attrType;
+        indexMetaInfo->attrByteOffset = attrByteOffset;
+        indexMetaInfo->rootPageNo = rootPageNum;
+        memcpy(indexMetaPage, indexMetaInfo, sizeof(IndexMetaInfo));
+
+        // Allocate new root page
+        Page *rootPage;
+        bufMgrIn->allocPage(&blobFile, rootPageNum, rootPage);
+
+        // TODO - Check if this is needed!
+        this->file = &blobFile;
+        this->rootPageNum = rootPageNum;
+        this->headerPageNum = headerPageID;
+        this->attrByteOffset = attrByteOffset;
+        this->attributeType = attrType;
+        this->bufMgr = bufMgrIn;
+
+        //TODO - Scan record and insert into B tree
+
+
+    }
 }
 
 
