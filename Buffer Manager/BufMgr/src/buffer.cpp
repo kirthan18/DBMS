@@ -50,7 +50,7 @@ namespace badgerdb {
     void BufMgr::allocBuf(FrameId &frame) {
 
         bool all_pages_pinned = true;
-        int i = 0;
+        uint32_t i = 0;
 
         while(1) {
 
@@ -77,7 +77,7 @@ namespace badgerdb {
                         //If page is not pinned, check if dirty bit is set
                         if (bufDescTable[clockHand].dirty) {
                             //If dirty bit is set, flush disk to page
-                            bufDescTable[clockHand].file->writePage(bufDescTable[clockHand].pageNo);
+                            bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
                         }
                         frame = clockHand;
                         return;
