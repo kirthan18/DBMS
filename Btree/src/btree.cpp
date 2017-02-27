@@ -7,6 +7,8 @@
 
 #include "btree.h"
 #include "exceptions/bad_index_info_exception.h"
+#include "filescan.h"
+#include "exceptions/end_of_file_exception.h"
 
 //#define DEBUG
 
@@ -24,6 +26,12 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 		const Datatype attrType)
 {
 
+    // Initializations to be done
+    this->scanExecuting = false;
+    this->leafOccupancy = 0;
+    this->nodeOccupancy = 0;
+
+    // Obtaining index file name from relation and attribute byte offset
     std::ostringstream	idxStr;
     idxStr	<<	relationName	<<	'.'	<<	attrByteOffset;
     std::string	indexName	=	idxStr.str();	//	indexName	is	the	name	of	the	index	file
@@ -37,6 +45,10 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
         BlobFile blobFile = BlobFile::open(indexName);
         this->file = &blobFile;
         this->headerPageNum = blobFile.getFirstPageNo();
+        this->attributeType = attrType;
+        this->attrByteOffset = attrByteOffset;
+        this->bufMgr = bufMgrIn;
+
         bufMgrIn->readPage(&blobFile, headerPageNum, indexPage);
 
         // Read the first page from the file (meta node)
@@ -89,6 +101,8 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
         indexMetaInfo->attrType = attrType;
         indexMetaInfo->attrByteOffset = attrByteOffset;
         indexMetaInfo->rootPageNo = rootPageNum;
+
+        // TODO - Possible error - check
         memcpy(indexMetaPage, indexMetaInfo, sizeof(IndexMetaInfo));
 
         // Allocate new root page
@@ -103,9 +117,27 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
         this->attributeType = attrType;
         this->bufMgr = bufMgrIn;
 
+        bufMgrIn->unPinPage(&blobFile, headerPageNum, true);
+
+
         //TODO - Scan record and insert into B tree
 
+        FileScan *fileScan = new FileScan(relationName, this->bufMgr);
 
+        try {
+            while (1) {
+                // Start scanning the file, get each record and insert it
+
+                RecordId recordId;
+                scanNext(recordId);
+
+                std::string record = fileScan->getRecord();
+                void* key = (void*) (record.c_str() + attrByteOffset);
+                insertEntry(key, recordId);
+            }
+        } catch (EndOfFileException e) {
+            // Do nothing!
+        }
     }
 }
 
