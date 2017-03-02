@@ -185,6 +185,9 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
 BTreeIndex::~BTreeIndex()
 {
+    this->scanExecuting = false;
+    this->bufMgr->flushFile(this->file);
+    delete this->file;
 }
 
 // -----------------------------------------------------------------------------
