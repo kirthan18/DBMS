@@ -472,7 +472,16 @@ class BTreeIndex {
 	 * @throws ScanNotInitializedException If no scan has been initialized.
 	**/
 	const void endScan();
-	
+
+    void validateOperators(const Operator &lowOpParm, const Operator &highOpParm) const;
+
+    void validateLowAndHighValues(const void *lowValParm, const void *highValParm);
+
+    template <class T1, class T2>
+    void findLeafPage(T1 lowValParm, int arrayLength);
+
+    template <class T>
+    int compare(T a, T b);
 };
 
 }
