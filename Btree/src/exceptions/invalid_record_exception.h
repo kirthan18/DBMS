@@ -10,7 +10,7 @@
 #include <string>
 
 #include "badgerdb_exception.h"
-#include "types.h"
+#include "../types.h"
 
 namespace badgerdb {
 
