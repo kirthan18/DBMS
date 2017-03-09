@@ -102,7 +102,7 @@ BTreeIndex::BTreeIndex(const std::string & relationName,
 
         // Populate IndexMetaInfo object with root page number
         IndexMetaInfo *indexMetaInfo =  new IndexMetaInfo();
-        std::strcpy(indexMetaInfo->relationName, indexName.c_str());
+        strcpy(indexMetaInfo->relationName, indexName.c_str());
         indexMetaInfo->attrType = attrType;
         indexMetaInfo->attrByteOffset = attrByteOffset;
         indexMetaInfo->rootPageNo = rootPageNum;
@@ -331,9 +331,8 @@ int BTreeIndex::compare (T a, T b) {
         return 0;
     } else if (a > b) {
         return 1;
-    } else if (a < b) {
-        return -1;
     }
+    return -1;
 }
 
 template <>
@@ -369,7 +368,7 @@ void BTreeIndex::validateLowAndHighValues(const void *lowValParm, const void *hi
             this->lowValString = std::string((char*) lowValParm);
             this->highValString = std::string((char*) highValParm);
 
-            if (std::strcmp(this->lowValString.c_str(), this->highValString.c_str()) > 0) {
+            if (strcmp(this->lowValString.c_str(), this->highValString.c_str()) > 0) {
                 isScanRangeValid = false;
             }
             break;
