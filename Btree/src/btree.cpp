@@ -760,13 +760,7 @@ namespace badgerdb
         }
         return -1;
     }
-
-    template <>
-    int BTreeIndex::compare (char* string1, char* string2) {
-        return strcmp(string1, string2);
-    }
-
-
+    
     void BTreeIndex::validateLowAndHighValues(const void *lowValParm, const void *highValParm) {
         bool isScanRangeValid = true;
 
@@ -819,10 +813,6 @@ namespace badgerdb
 // -----------------------------------------------------------------------------
 // BTreeIndex::startScan
 // -----------------------------------------------------------------------------
-/*This method is used to begin a “filtered scan” of the index.
- * Check if the input range is make sense.Store it if it is, otherwise throw exception.
- * It track down start from root to the low value of the search.
- */
     const void BTreeIndex::startScan(const void* lowValParm,
                                      const Operator lowOpParm,
                                      const void* highValParm,
@@ -844,7 +834,6 @@ namespace badgerdb
             case INTEGER: {
                 this->lowValInt = *((int *) lowValParm);
                 this->highValInt = *((int *) highValParm);
-                //startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int *) highValParm), INTARRAYNONLEAFSIZE);
                 findLeafPage<int, NonLeafNodeInt>(*((int *) lowValParm), INTARRAYNONLEAFSIZE);
                 break;
             }
@@ -852,7 +841,6 @@ namespace badgerdb
             case DOUBLE: {
                 this->lowValDouble = *((double *) lowValParm);
                 this->highValDouble = *((double *) highValParm);
-                //startScanHelper<double , NonLeafNodeDouble>(*((double *) lowValParm), *((double *) highValParm), DOUBLEARRAYNONLEAFSIZE);
                 findLeafPage<double, NonLeafNodeDouble>(*((double *) lowValParm), DOUBLEARRAYNONLEAFSIZE);
                 break;
             }
@@ -861,11 +849,9 @@ namespace badgerdb
                 strcpy((char*) this->lowValString.c_str(), (char *)lowValParm);
                 strcpy((char*) this->highValString.c_str(), (char *)highValParm);
 
-                //strncpy((char*) this->lowValString.c_str(), (char *)lowValParm, STRINGSIZE-1);
+                //TODO - Remove this later
                 strncpy(lowValChar, (char *)lowValParm, STRINGSIZE);
-                //strncpy((char*) this->highValString.c_str(), (char *)highValParm, STRINGSIZE-1);
                 strncpy(highValChar, (char *)highValParm, STRINGSIZE);
-                //startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
 
                 findLeafPage<std::string, NonLeafNodeString>(this->lowValString, STRINGARRAYNONLEAFSIZE);
                 break;
