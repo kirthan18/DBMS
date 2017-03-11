@@ -1,3 +1,4 @@
+
 /**
  * @author See Contributors.txt for code contributors and overview of BadgerDB.
  *
@@ -130,7 +131,13 @@ namespace badgerdb
         std::string	indexName	=	idxStr.str();	//	indexName	is	the	name	of	the	index	file
 
         if (BlobFile::exists(indexName)) {
+            std::cout << "File exists and is open" << std::endl;
             std::cout << "File exists!" << std::endl;
+            if (BlobFile::exists(indexName)) {
+                std::cout << "File exists and is open" << std::endl;
+            } else {
+                std::cout << "File maybe doesnt exist or is not open" << std::endl;
+            }
             Page *indexPage;
             PageId indexPageNo = 1;
 
@@ -184,8 +191,10 @@ namespace badgerdb
             }
         } else {
             std::cout << "File maybe doesnt exist or is not open" << std::endl;
-            // Index file doesn't exist!
+
+
             BlobFile *blobFile = new BlobFile(indexName, true);
+            // Index file doesn't exist!
 
             // Allocate new meta page
             Page *indexMetaPage;
@@ -231,6 +240,7 @@ namespace badgerdb
             try {
                 while (1) {
                     // Start scanning the file, get each record and insert it
+
                     RecordId recordId;
                     fileScan.scanNext(recordId);
 
@@ -601,7 +611,7 @@ namespace badgerdb
 
             //call recursive function
             insertEntryRecursive<char[STRINGSIZE], LeafNodeString, NonLeafNodeString>
-                    (ridKeyPairString, rootPageNum, 0, STRINGARRAYLEAFSIZE, STRINGARRAYNONLEAFSIZE, newValue, newPageId);
+            (ridKeyPairString, rootPageNum, 0, STRINGARRAYLEAFSIZE, STRINGARRAYNONLEAFSIZE, newValue, newPageId);
 
             //if root got split
             if (newPageId != 0)
@@ -619,12 +629,6 @@ namespace badgerdb
         }
         return -1;
     }
-
-    template <>
-    int BTreeIndex::compare (char* string1, char* string2) {
-        return strcmp(string1, string2);
-    }
-
 
     void BTreeIndex::validateLowAndHighValues(const void *lowValParm, const void *highValParm) {
         bool isScanRangeValid = true;
@@ -674,10 +678,11 @@ namespace badgerdb
             throw BadOpcodesException();
         }
     }
+
 // -----------------------------------------------------------------------------
 // BTreeIndex::startScan
 // -----------------------------------------------------------------------------
-    /*const void BTreeIndex::startScan(const void* lowValParm,
+    const void BTreeIndex::startScan(const void* lowValParm,
                                      const Operator lowOpParm,
                                      const void* highValParm,
                                      const Operator highOpParm)
@@ -698,7 +703,6 @@ namespace badgerdb
             case INTEGER: {
                 this->lowValInt = *((int *) lowValParm);
                 this->highValInt = *((int *) highValParm);
-                //startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int *) highValParm), INTARRAYNONLEAFSIZE);
                 findLeafPage<int, NonLeafNodeInt>(*((int *) lowValParm), INTARRAYNONLEAFSIZE);
                 break;
             }
@@ -706,135 +710,27 @@ namespace badgerdb
             case DOUBLE: {
                 this->lowValDouble = *((double *) lowValParm);
                 this->highValDouble = *((double *) highValParm);
-                //startScanHelper<double , NonLeafNodeDouble>(*((double *) lowValParm), *((double *) highValParm), DOUBLEARRAYNONLEAFSIZE);
                 findLeafPage<double, NonLeafNodeDouble>(*((double *) lowValParm), DOUBLEARRAYNONLEAFSIZE);
                 break;
             }
 
             case STRING: {
-                //strcpy((char*) this->lowValString.c_str(), (char *)lowValParm);
-                //strcpy((char*) this->highValString.c_str(), (char *)highValParm);
+                strcpy((char*) this->lowValString.c_str(), (char *)lowValParm);
+                strcpy((char*) this->highValString.c_str(), (char *)highValParm);
 
-                strncpy((char*) this->lowValString.c_str(), (char *)lowValParm, STRINGSIZE-1);
+                //TODO - Remove this later
                 strncpy(lowValChar, (char *)lowValParm, STRINGSIZE);
-                strncpy((char*) this->highValString.c_str(), (char *)highValParm, STRINGSIZE-1);
                 strncpy(highValChar, (char *)highValParm, STRINGSIZE);
 
-                    startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
-                //findLeafPage<char[STRINGSIZE], NonLeafNodeString>(lowValChar, STRINGARRAYNONLEAFSIZE);
+                findLeafPage<std::string, NonLeafNodeString>(this->lowValString, STRINGARRAYNONLEAFSIZE);
                 break;
             }
 
             default:
                 break;
         }
-         //Call tmplate helper to do the work.
-        if(attributeType == INTEGER) {
-            this->lowValInt = *((int*) lowValParm);
-            this->highValInt = *((int *) highValParm);
-            startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int *) highValParm), INTARRAYNONLEAFSIZE);
-        } else if (attributeType == DOUBLE) {
-            this->lowValDouble = *((double*) lowValParm);
-            this->highValDouble = *((double *) highValParm);
-            startScanHelper<double , NonLeafNodeDouble>(*((double *) lowValParm), *((double *) highValParm), DOUBLEARRAYNONLEAFSIZE);
-        } else {
-            strncpy((char*) this->lowValString.c_str(), (char *)lowValParm, STRINGSIZE-1);
-            strncpy(lowValChar, (char *)lowValParm, STRINGSIZE);
-            strncpy((char*) this->highValString.c_str(), (char *)highValParm, STRINGSIZE-1);
-            strncpy(highValChar, (char *)highValParm, STRINGSIZE);
-            startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
-        }*//*
-    }*/
 
-// -----------------------------------------------------------------------------
-// BTreeIndex::startScan
-// -----------------------------------------------------------------------------
-/*This method is used to begin a “filtered scan” of the index.
- * Check if the input range is make sense.Store it if it is, otherwise throw exception.
- * It track down start from root to the low value of the search.
- */
-const void BTreeIndex::startScan(const void* lowValParm,
-                                 const Operator lowOpParm,
-                                 const void* highValParm,
-                                 const Operator highOpParm)
-{
-    scanExecuting = true;
-    if (lowOpParm != GT && lowOpParm !=GTE ){
-        throw BadOpcodesException();
     }
-    if(highOpParm != LT && highOpParm != LTE){
-        throw BadOpcodesException();
-    }
-
-    this->lowOp = lowOpParm;
-    this->highOp = highOpParm;
-
-    // Call tmplate helper to do the work.
-    if(attributeType == INTEGER) {
-        this->lowValInt = *((int*) lowValParm);
-        this->highValInt = *((int *) highValParm);
-        startScanHelper<int, NonLeafNodeInt>(*((int*) lowValParm), *((int *) highValParm), INTARRAYNONLEAFSIZE);
-    } else if (attributeType == DOUBLE) {
-        this->lowValDouble = *((double*) lowValParm);
-        this->highValDouble = *((double *) highValParm);
-        startScanHelper<double , NonLeafNodeDouble>(*((double *) lowValParm), *((double *) highValParm), DOUBLEARRAYNONLEAFSIZE);
-    } else {
-        strncpy((char*) this->lowValString.c_str(), (char *)lowValParm, STRINGSIZE-1);
-        strncpy(lowValChar, (char *)lowValParm, STRINGSIZE);
-        strncpy((char*) this->highValString.c_str(), (char *)highValParm, STRINGSIZE-1);
-        strncpy(highValChar, (char *)highValParm, STRINGSIZE);
-        startScanHelper<char[STRINGSIZE], NonLeafNodeString> (lowValChar, highValChar, STRINGARRAYNONLEAFSIZE);
-    }
-}
-
-/*
- * Helper method of startScan, basically it base on the low bound to find the first position of the entry.
- * This function helps the startScan function.
- * T is the data type.
- * T1 is the non-leaf struct.
- * This function is called by the startScan and do the work.
- * */
-template<class T, class T1>
-void BTreeIndex::startScanHelper(T lowValParm,
-                                 T highValParm,
-                                 int NONLEAFARRAYMAX)
-{
-    if(biggerThan<T> (lowValParm,  highValParm))
-        throw BadScanrangeException();
-
-    //find first one
-    currentPageNum = rootPageNum;
-    bufMgr->readPage(file, currentPageNum, currentPageData);
-    T1* nonLeafNode = (T1*) currentPageData;
-
-    int pos = 0;
-    while(nonLeafNode->level != 1) {
-        // If current level is not 1, then next page is not leaf page.
-        // Still need to go to next level.
-        pos = 0;
-        while(!smallerThan<T> (lowValParm, nonLeafNode->keyArray[pos])
-              && nonLeafNode->pageNoArray[pos + 1] != 0
-              && pos < NONLEAFARRAYMAX)
-            pos++;
-        PageId nextPageId = nonLeafNode->pageNoArray[pos];
-        bufMgr->readPage(file, nextPageId, currentPageData);
-        bufMgr->unPinPage(file, currentPageNum, false);
-        currentPageNum = nextPageId;
-        nonLeafNode = (T1*) currentPageData;
-    }
-
-    // This page is level 1, which means next page is leaf node.
-    pos = 0;
-    while(!smallerThan<T> (lowValParm, nonLeafNode->keyArray[pos])
-          && nonLeafNode->pageNoArray[pos + 1] != 0
-          && pos < NONLEAFARRAYMAX)
-        pos++;
-    PageId nextPageId = nonLeafNode->pageNoArray[pos];
-    bufMgr->readPage(file, nextPageId, currentPageData);
-    bufMgr->unPinPage(file, currentPageNum, false);
-    currentPageNum = nextPageId;
-    nextEntry = 0;
-}
 
     // TODO - Add comments
     template<class T1, class T2>
@@ -862,7 +758,7 @@ void BTreeIndex::startScanHelper(T lowValParm,
                     break;
                 }
 
-                // If the value of the current key if smaller than the the low value, break
+                // If the value of the current key if greater than or equal to the the low value, break
                 if (compare<T1>(lowValParm, currentNonLeafNode->keyArray[currIndex]) < 0) {
                     break;
                 }
@@ -891,7 +787,7 @@ void BTreeIndex::startScanHelper(T lowValParm,
                 break;
             }
 
-            // If the value of the current key if smaller than the the low value, break
+            // If the value of the current key if greater than or equal to the the low value, break
             if (compare<T1> (lowValParm, currentNonLeafNode->keyArray[currIndex]) < 0) {
                 break;
             }
@@ -906,78 +802,135 @@ void BTreeIndex::startScanHelper(T lowValParm,
         nextEntry = 0;
     }
 
-// -----------------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------------
 // BTreeIndex::scanNext
 // -----------------------------------------------------------------------------
     const void BTreeIndex::scanNext(RecordId& outRid)
     {
-        if(scanExecuting == false)
+        if (!this->scanExecuting) {
             throw ScanNotInitializedException();
+        }
 
-        if(attributeType == INTEGER)
-            scanNextHelper<int, LeafNodeInt> (outRid, lowValInt, highValInt, INTARRAYLEAFSIZE);
-        else if (attributeType == DOUBLE)
-            scanNextHelper<double, LeafNodeDouble> (outRid, lowValDouble, highValDouble, DOUBLEARRAYLEAFSIZE);
-        /*else
-            scanNextHelper<char[STRINGSIZE], LeafNodeString> (outRid, lowValChar, highValChar, STRINGARRAYLEAFSIZE);*/
-    }
+        switch (this->attributeType) {
+            case INTEGER: {
+                while (1) {
+                    LeafNodeInt *leafNode = (LeafNodeInt *) currentPageData;
 
-/*
- * It starts to scan from the first value,
- * which is the position of low value.
- * If current page is full or reach the right most entry in the current page,
- * we use leafNode->right to jump to the next right page to continue scan the entry.
- * If we get to the last leaf node or the key is larger than high value,
- * then the scan is finish.
- * */
-    template <class T, class T1>
-    void BTreeIndex::scanNextHelper(RecordId &outRid, T lowVal, T highVal, int ARRAYMAX)
-    {
-        T1* leafNode;
-        while(1){
-            leafNode = (T1*) currentPageData;
+                    if (this->nextEntry == INTARRAYLEAFSIZE || leafNode->ridArray[this->nextEntry].page_number == 0) {
+                        if (leafNode->rightSibPageNo == 0) {
+                            bufMgr->unPinPage(file, currentPageNum, false);
+                            throw IndexScanCompletedException();
+                        }
+                        this->bufMgr->unPinPage(this->file, this->currentPageNum, false);
 
-            // Go to next page.
-            if(leafNode->ridArray[nextEntry].page_number == 0 || nextEntry == ARRAYMAX) {
-                PageId nextPageNum = leafNode->rightSibPageNo;
-                if(nextPageNum == 0){
-                    // Next page is 0, scan finish.
-                    bufMgr->unPinPage(file, currentPageNum, false);
-                    throw IndexScanCompletedException();
+                        this->currentPageNum = leafNode->rightSibPageNo;
+                        this->bufMgr->readPage(this->file, this->currentPageNum, this->currentPageData);
+                        nextEntry = 0;
+                        continue;
+                    }
+
+                    if ((this->lowOp == GT && compare<int>(leafNode->keyArray[nextEntry], this->lowValInt) <= 0) ||
+                        (lowOp == GTE && compare<int>(leafNode->keyArray[nextEntry], this->lowValInt) < 0)) {
+                        nextEntry++;
+                        continue;
+                    }
+
+                    if ((this->highOp == LT && compare<int>(leafNode->keyArray[nextEntry], this->highValInt) >= 0) ||
+                        (this->highOp == LTE && compare<int>(leafNode->keyArray[nextEntry], this->highValInt) > 0)) {
+                        throw IndexScanCompletedException();
+                    }
+
+                    outRid = leafNode->ridArray[nextEntry];
+                    this->nextEntry++;
+                    return;
                 }
-
-                bufMgr->unPinPage(file, currentPageNum, false);
-                currentPageNum = nextPageNum;
-
-                bufMgr->readPage(file, currentPageNum, currentPageData);
-                nextEntry = 0;
-                continue;
             }
 
-            // Do not satisfy.
-            if((lowOp==GT && !biggerThan<T> (leafNode->keyArray[nextEntry], lowVal) )
-               || (lowOp==GTE && smallerThan<T> (leafNode->keyArray[nextEntry], lowVal))
-                    ) {
-                nextEntry++;
-                continue;
+
+            case DOUBLE: {
+                while (1) {
+                    LeafNodeDouble *leafNode = (LeafNodeDouble *) currentPageData;
+
+                    if (this->nextEntry == DOUBLEARRAYLEAFSIZE || leafNode->ridArray[this->nextEntry].page_number == 0) {
+                        if (leafNode->rightSibPageNo == 0) {
+                            bufMgr->unPinPage(file, currentPageNum, false);
+                            throw IndexScanCompletedException();
+                        }
+                        this->bufMgr->unPinPage(this->file, this->currentPageNum, false);
+
+                        this->currentPageNum = leafNode->rightSibPageNo;
+                        this->bufMgr->readPage(this->file, this->currentPageNum, this->currentPageData);
+                        nextEntry = 0;
+                        continue;
+                    }
+
+                    if ((this->lowOp == GT && compare<double>(leafNode->keyArray[nextEntry], this->lowValDouble) <= 0) ||
+                        (lowOp == GTE && compare<double>(leafNode->keyArray[nextEntry], this->lowValDouble) < 0)) {
+                        nextEntry++;
+                        continue;
+                    }
+
+                    if ((this->highOp == LT && compare<double>(leafNode->keyArray[nextEntry], this->highValDouble) >= 0) ||
+                        (this->highOp == LTE && compare<double>(leafNode->keyArray[nextEntry], this->highValDouble) > 0)) {
+                        throw IndexScanCompletedException();
+                    }
+
+                    outRid = leafNode->ridArray[nextEntry];
+                    this->nextEntry++;
+                    return;
+                }
             }
 
-            // Value bigger that high value, scan end.
-            if((highOp==LT && !smallerThan<T> (leafNode->keyArray[nextEntry],  highVal))
-               || (highOp==LTE && biggerThan<T> (leafNode->keyArray[nextEntry], highVal) ))
-                throw IndexScanCompletedException();
 
-            // Got a record.
-            outRid = leafNode->ridArray[nextEntry];
-            nextEntry++;
-            return ;
+            case STRING: {
+                while (1) {
+                    LeafNodeString *leafNode = (LeafNodeString *) currentPageData;
+
+                    if (this->nextEntry == STRINGARRAYLEAFSIZE || leafNode->ridArray[this->nextEntry].page_number == 0) {
+                        if (leafNode->rightSibPageNo == 0) {
+                            bufMgr->unPinPage(file, currentPageNum, false);
+                            throw IndexScanCompletedException();
+                        }
+                        this->bufMgr->unPinPage(this->file, this->currentPageNum, false);
+
+                        this->currentPageNum = leafNode->rightSibPageNo;
+                        this->bufMgr->readPage(this->file, this->currentPageNum, this->currentPageData);
+                        nextEntry = 0;
+                        continue;
+                    }
+
+                    char *lowValKey = (char *) malloc(STRINGSIZE);
+                    strcpy(lowValKey, this->lowValString.c_str());
+                    std::string key = leafNode->keyArray[nextEntry];
+                    //strcmp(leafNode->keyArray[nextEntry], this->lowValString.c_str()) <= 0)
+                    if ((this->lowOp == GT && strncmp(leafNode->keyArray[nextEntry], this->lowValString.c_str(), STRINGSIZE) <= 0)||
+                        (lowOp == GTE && strncmp(leafNode->keyArray[nextEntry], this->lowValString.c_str(), STRINGSIZE) < 0)) {
+                        nextEntry++;
+                        continue;
+                    }
+
+                    char *highValKey = (char *) malloc(STRINGSIZE);
+                    strcpy(highValKey, this->highValString.c_str());
+                    key = leafNode->keyArray[nextEntry];
+                    if ((this->highOp == LT && strncmp(leafNode->keyArray[nextEntry], this->highValString.c_str(), STRINGSIZE) >= 0) ||
+                        (this->highOp == LTE && strncmp(leafNode->keyArray[nextEntry], this->highValString.c_str(), STRINGSIZE) > 0)) {
+                        throw IndexScanCompletedException();
+                    }
+
+                    outRid = leafNode->ridArray[nextEntry];
+                    this->nextEntry++;
+                    return;
+                }
+            }
         }
     }
+
 
 // -----------------------------------------------------------------------------
 // BTreeIndex::endScan
 // -----------------------------------------------------------------------------
-//
+
     const void BTreeIndex::endScan()
     {
 
@@ -998,4 +951,3 @@ void BTreeIndex::startScanHelper(T lowValParm,
 
     }
 }
-
