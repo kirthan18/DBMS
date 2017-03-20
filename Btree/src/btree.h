@@ -489,13 +489,13 @@ at this level are just above the leaf nodes. Otherwise set to 0.
            * @param newChildValue	Need value pushed up by the child.
            * @param newChildPageId	Page number of the new child page.
           **/
-		template <class T, class T2>
-		void nonLeafSplitHelper(int pos,
-								int NONLEAFARRAYMAX,
+		template <class T1, class T2>
+		void splitNonLeafNode(int indexToInsert,
+								int max_entries,
 								T2* nonLeafNode,
 								PageId& newPageId,
-								T & newValue,
-								T & newChildValue,
+								T1& newKeyToParent,
+								T1& newKeyFromChild,
 								PageId newChildPageId);
 
 		/**
@@ -600,7 +600,6 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 
 		template <class T1, class T2>
 		void addLeafNodeEntry(int indexToInsert, int lastIndex, T1* leafNode, RIDKeyPair<T2> ridKeyPair);
-
 
 	};
 

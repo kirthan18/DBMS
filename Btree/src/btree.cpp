@@ -65,19 +65,6 @@ namespace badgerdb
         return strncmp(a, b, STRINGSIZE) > 0;
     }
 
-// Type T equal comparison
-    template <class T>
-    bool equalTo(T a, T b){
-        return a==b;
-    }
-
-// specialization char[STRINGSIZE] equal to comparison
-    template <>
-    bool equalTo<char[STRINGSIZE]>(char a[STRINGSIZE], char b[STRINGSIZE]){
-        return strncmp(a, b, STRINGSIZE) == 0;
-    }
-
-
     void initializeLeafNodes(const Datatype attrType, Page *rootPage) {
         switch (attrType) {
             case INTEGER: {
@@ -268,64 +255,78 @@ namespace badgerdb
 /*
  * When the non Leaf need to split it call this nonLeafSplit Helper
  * */
-    template <class T, class T2>
-    void  BTreeIndex::nonLeafSplitHelper(int pos,
-                                         int NONLEAFARRAYMAX,
+    template <class T1, class T2>
+    void  BTreeIndex::splitNonLeafNode(int indexToInsert,
+                                         int max_entries,
                                          T2* nonLeafNode,
                                          PageId& newPageId,
-                                         T & newValue,
-                                         T&  newChildValue,
+                                         T1& newKeyToParent,
+                                         T1&  newKeyFromChild,
                                          PageId newChildPageId){
         //full, need split
-        Page* newPage;
-        bufMgr->allocPage(file, newPageId, newPage);
-        T2* newNonLeafNode = (T2*) newPage;
+        Page* newNonLeafPage;
+        bufMgr->allocPage(file, newPageId, newNonLeafPage);
+        T2* newNonLeafNode = (T2*) newNonLeafPage;
 
-        //tmp array
-        T tmpKeyArray[NONLEAFARRAYMAX + 1];
-        PageId tmpPageIdArray[NONLEAFARRAYMAX + 2];
+        /*
+         * Allocate a temporary array for both pageIds and keys
+         * PageId array length is max_entries + 2
+         * because we have existing m + 1 pointers + one more pointer to new element
+         */
+        T1 tempKey[max_entries + 1];
+        PageId tempPageId[max_entries + 2];
 
-        //copy to tmp
-        for(int i=0; i < NONLEAFARRAYMAX; i++) {
-            tmpPageIdArray[i] = nonLeafNode->pageNoArray[i];
-            copy<T> (tmpKeyArray[i], nonLeafNode->keyArray[i]);
+        // Copy all keys to temp array
+        for(int i=0; i < max_entries; i++) {
+            copy<T1> (tempKey[i], nonLeafNode->keyArray[i]);
         }
-        tmpPageIdArray[NONLEAFARRAYMAX + 1] = nonLeafNode->pageNoArray[NONLEAFARRAYMAX + 1];
 
-        for(int i= NONLEAFARRAYMAX; i > pos; i--){
-            copy<T> (tmpKeyArray[i], tmpKeyArray[i-1]);
-            tmpPageIdArray[i+1] = tmpPageIdArray[i];
+        // Copy all pageIDs to temp array
+        for(int i=0; i < max_entries + 1; i++) {
+            tempPageId[i] = nonLeafNode->pageNoArray[i];
         }
-        copy<T> (tmpKeyArray[pos], newChildValue);
-        tmpPageIdArray[pos+1] = newChildPageId;
 
-        //clear old and new page
-        for(int i=0; i < NONLEAFARRAYMAX + 1; i++){
+        // Push all elements by one from the end till indexToInsert
+        for(int i= max_entries; i > indexToInsert; i--) {
+            copy<T1> (tempKey[i], tempKey[i - 1]);
+            tempPageId[i + 1] = tempPageId[i];
+        }
+
+        // Copy the key and page number at the indexToInsert position
+        copy<T1> (tempKey[indexToInsert], newKeyFromChild);
+        tempPageId[indexToInsert + 1] = newChildPageId;
+
+        // Re-initialize old and new non lead nodes
+        for(int i=0; i < max_entries + 1; i++) {
             nonLeafNode->pageNoArray[i] = 0;
             newNonLeafNode->pageNoArray[i] = 0;
         }
 
-        //copy back
-        for(int i=0; i< (NONLEAFARRAYMAX + 1) / 2; i++ ){
-            copy<T> (nonLeafNode->keyArray[i], tmpKeyArray[i]);
-            nonLeafNode->pageNoArray[i] = tmpPageIdArray[i];
+        // Copy first half of elements to the old leaf node
+        for(int i=0; i< (max_entries + 1) / 2; i++ ){
+            copy<T1> (nonLeafNode->keyArray[i], tempKey[i]);
+            nonLeafNode->pageNoArray[i] = tempPageId[i];
         }
-        nonLeafNode->pageNoArray[(NONLEAFARRAYMAX + 1) / 2] = tmpPageIdArray[(NONLEAFARRAYMAX + 1) / 2];
+        // Copy the last pointer to the pageNoArray
+        nonLeafNode->pageNoArray[(max_entries + 1) / 2] = tempPageId[(max_entries + 1) / 2];
 
-        for(int i= (NONLEAFARRAYMAX + 1) / 2 + 1; i < NONLEAFARRAYMAX + 1; i++){
-            copy<T> (newNonLeafNode->keyArray[i - (NONLEAFARRAYMAX + 1) / 2 - 1], tmpKeyArray[i]);
-            newNonLeafNode->pageNoArray[i - (NONLEAFARRAYMAX + 1) / 2 - 1 ] = tmpPageIdArray[i];
+        // Copy the second half of elements to the old leaf node
+        for(int i = (max_entries + 1) / 2 + 1; i < max_entries + 1; i++){
+            copy<T1> (newNonLeafNode->keyArray[i - (max_entries + 1) / 2 - 1], tempKey[i]);
+            newNonLeafNode->pageNoArray[i - (max_entries + 1) / 2 - 1 ] = tempPageId[i];
         }
-        newNonLeafNode->pageNoArray[NONLEAFARRAYMAX + 1 - (NONLEAFARRAYMAX + 1) / 2 - 1 ] = tmpPageIdArray[
-                NONLEAFARRAYMAX + 1];
 
-        //level
+        // Copy the last pointer of the new node
+        newNonLeafNode->pageNoArray[(max_entries + 1)/2] = tempPageId[
+                max_entries + 1];
+
+        // Set the level of the new non leaf node to that of the existing non leaf node
         newNonLeafNode->level = nonLeafNode->level;
 
-        //push up
-        copy<T> (newValue, tmpKeyArray[(NONLEAFARRAYMAX + 1) / 2]);
+        // Set the new key value of the parent node
+        copy<T1> (newKeyToParent, tempKey[(max_entries + 1) / 2]);
 
-        //unpin
+        // Page is modified so unpin by setting the dirty bit to true
         bufMgr->unPinPage(file, newPageId, true);
     };
 
@@ -376,7 +377,7 @@ namespace badgerdb
         copy<T2> (leafNode->keyArray[indexToInsert], ridKeyPair.key);
         leafNode->ridArray[indexToInsert] = ridKeyPair.rid;
     }
-
+    
     template <class T1, class T2>
     void BTreeIndex::splitLeafNode(int max_entries,
                                    RIDKeyPair<T1> ridKeyPair,
@@ -475,60 +476,63 @@ namespace badgerdb
     template <class T1, class T2, class T3>
     void BTreeIndex::insertEntryRecursive(RIDKeyPair<T1> ridKeyPair,
                                           PageId pageId,
-                                          bool isLeaf,
-                                          int LEAFARRAYMAX,
-                                          int NONLEAFARRAYMAX,
+                                          bool isLeafNode,
+                                          int max_entries_leaf,
+                                          int max_entries_non_leaf,
                                           T1 & newValue,
                                           PageId& newPageId)
     {
-        if(isLeaf){
+        if(isLeafNode){
             // Read the page
             Page* leafPage;
             bufMgr->readPage(file, pageId, leafPage);
             T2 *leafNode = (T2 *) leafPage;
 
-            // Find position
-            int pos = 0;
+            // Find position where the new record should be inserted
+            int currIndex = 0;
             while (1) {
                 // If current index position is greater than the number if entries, break
-                if (pos >= LEAFARRAYMAX) {
+                if (currIndex >= max_entries_leaf) {
                     break;
                 }
 
                 // If the next entry points to a page with number 0, break
-                if (leafNode->ridArray[pos].page_number == 0) {
+                if (leafNode->ridArray[currIndex].page_number == 0) {
                     break;
                 }
 
                 // If the value of the current key if greater than or equal to the the low value, break
-                if (compare<T1>(leafNode->keyArray[pos], ridKeyPair.key) > 0) {
+                if (compare<T1>(leafNode->keyArray[currIndex], ridKeyPair.key) > 0) {
                     break;
                 }
 
-                pos++;
+                currIndex++;
             }
 
             int lastIndex = 0;
 
-            while (lastIndex < LEAFARRAYMAX) {
+            // Find index of last entry in the leaf node
+            while (lastIndex < max_entries_leaf) {
                 if (leafNode->ridArray[lastIndex].page_number == 0) {
                     break;
                 }
                 lastIndex++;
             }
 
-            if(lastIndex < LEAFARRAYMAX){
+            if(lastIndex < max_entries_leaf){
                 // Leaf node is not full
                 // Add entry to leaf
-                addLeafNodeEntry<T2, T1>(pos, lastIndex, leafNode, ridKeyPair);
+                addLeafNodeEntry<T2, T1>(currIndex, lastIndex, leafNode, ridKeyPair);
             } else {
                 // Leaf node is full
                 // Split leaf node and insert
-                splitLeafNode<T1,T2>(LEAFARRAYMAX, ridKeyPair,leafNode,newPageId,newValue);
+                splitLeafNode<T1,T2>(max_entries_leaf, ridKeyPair,leafNode,newPageId,newValue);
             }
 
             leafOccupancy++;
-            //unpin
+
+            // The page is now modified
+            // Unpin it by setting the dirty flag to true
             bufMgr->unPinPage(file, pageId, true);
 
         } else {
@@ -539,67 +543,67 @@ namespace badgerdb
             T3* nonLeafNode = (T3*) nonLeafPage;
 
             // Find pageArray position
-            int pos = 0;
+            int currIndex = 0;
             while (1) {
                 // If current index position is greater than the number if entries, break
-                if (pos >= NONLEAFARRAYMAX) {
+                if (currIndex >= max_entries_non_leaf) {
                     break;
                 }
 
                 // If the next entry points to a page with number 0, break
-                if (nonLeafNode->pageNoArray[pos + 1] == 0) {
+                if (nonLeafNode->pageNoArray[currIndex + 1] == 0) {
                     break;
                 }
 
                 // If the value of the current key if greater than or equal to the the low value, break
-                if (compare<T1> (nonLeafNode->keyArray[pos], ridKeyPair.key) >= 0) {
+                if (compare<T1> (nonLeafNode->keyArray[currIndex], ridKeyPair.key) >= 0) {
                     break;
                 }
 
-                pos++;
+                currIndex++;
             }
 
             // Index file is empty.
-            if(nonLeafNode->pageNoArray[pos] == 0){
-                createLeaf<T1, T2, T3>(LEAFARRAYMAX,
-                                       ridKeyPair,
-                                       nonLeafNode,
-                                       pageId);
+            if(nonLeafNode->pageNoArray[currIndex] == 0){
+                createLeaf<T1, T2, T3>(max_entries_leaf, ridKeyPair, nonLeafNode, pageId);
                 return;
             }
 
-            // Call recursive function.
             bufMgr->unPinPage(file, pageId, false);
             T1 newChildValue;
             PageId newChildPageId = 0;
-            insertEntryRecursive<T1, T2, T3>(ridKeyPair, nonLeafNode->pageNoArray[pos], nonLeafNode->level == 1,
-                    LEAFARRAYMAX, NONLEAFARRAYMAX, newChildValue, newChildPageId);
+
+            bool isLeafNode = nonLeafNode->level == 1? true: false;
+            insertEntryRecursive<T1, T2, T3>(ridKeyPair, nonLeafNode->pageNoArray[currIndex], isLeafNode,
+                    max_entries_leaf, max_entries_non_leaf, newChildValue, newChildPageId);
 
             // Check if child split.
             if(newChildPageId != 0){
-                // If child split
+                // Child node is split, so add new key to this node
                 bufMgr->readPage(file, pageId, nonLeafPage);
                 T3* nonLeafNode = (T3*) nonLeafPage;
 
-                // Find last entry.
-                int last;
-                for (last = 0; last < NONLEAFARRAYMAX; last++)
-                    if(nonLeafNode->pageNoArray[last + 1] == 0)
+                // Find index of last entry in the leaf node
+                int lastIndex;
+                for (lastIndex = 0; lastIndex < max_entries_non_leaf; lastIndex++) {
+                    if (nonLeafNode->pageNoArray[lastIndex + 1] == 0) {
                         break;
+                    }
+                }
 
-                // Check if full.
-                if(last < NONLEAFARRAYMAX){
-                    // Not full, just insert.
-                    for(int i=last; i>pos; i--){
+                if(lastIndex < max_entries_non_leaf){
+                    // Node is not full
+                    // Add entry to node
+                    for(int i = lastIndex; i > currIndex; i--){
                         copy<T1> (nonLeafNode->keyArray[i], nonLeafNode->keyArray[i - 1]);
                         nonLeafNode->pageNoArray[i + 1] = nonLeafNode->pageNoArray[i];
                     }
-                    copy<T1> (nonLeafNode->keyArray[pos], newChildValue);
-                    nonLeafNode->pageNoArray[pos + 1] = newChildPageId;
+                    copy<T1> (nonLeafNode->keyArray[currIndex], newChildValue);
+                    nonLeafNode->pageNoArray[currIndex + 1] = newChildPageId;
                 }
                 else{
-                    // Full. Call split helper.
-                    nonLeafSplitHelper<T1, T3>(pos, NONLEAFARRAYMAX, nonLeafNode,newPageId,newValue,
+                    // Node is full - split node and insert new key
+                    splitNonLeafNode<T1, T3>(currIndex, max_entries_non_leaf, nonLeafNode,newPageId,newValue,
                                               newChildValue,newChildPageId);
                 }
 
