@@ -472,13 +472,12 @@ at this level are just above the leaf nodes. Otherwise set to 0.
            * @param newPageId		Need value pushed up
            * @param newValue		Page number of the new page.
           **/
-		template <class T, class T1>
-		void leafSplitHelper(int pos, int last, int LEAFARRAYMAX,
-							 int NONLEAFARRAYMAX,
-							 RIDKeyPair<T> ridKeyPair,
-							 T1* leafNode,
-							 PageId& newPageId,
-							 T & newValue);
+		template <class T1, class T2>
+		void splitLeafNode(int max_entries,
+							 RIDKeyPair<T1> ridKeyPair,
+							 T2* existingLeafNode,
+							 PageId& newLeafPageId,
+							 T1& newKey);
 
 		/**
            * Helper function when a nonleaf node need to split.
@@ -598,6 +597,9 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 
 		template <class T1, class T2>
 		void findLeafPage(T1 lowValParm, int arrayLength);
+
+		template <class T1, class T2>
+		void addLeafNodeEntry(int indexToInsert, int lastIndex, T1* leafNode, RIDKeyPair<T2> ridKeyPair);
 
 
 	};

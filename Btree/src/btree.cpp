@@ -265,70 +265,6 @@ namespace badgerdb
         delete this->file;
     }
 
-
-/*
- * this helper help the leaf to split and return newPageId and new Value to parent
- * */
-    template <class T, class T1>
-    void BTreeIndex::leafSplitHelper(int pos, int last, int LEAFARRAYMAX,
-                                     int NONLEAFARRAYMAX,
-                                     RIDKeyPair<T> ridKeyPair,
-                                     T1* leafNode,
-                                     PageId& newPageId,
-                                     T & newValue)
-    {
-        //full
-        Page* newPage;
-        bufMgr->allocPage(file, newPageId, newPage);
-        T1 *newLeafNode = (T1 *) newPage;
-
-        //tmp array
-        T tmpKeyArray[LEAFARRAYMAX + 1];
-        RecordId tmpRidArray[LEAFARRAYMAX + 1];
-
-        //copy all new records to tmp
-        for(int i=0; i < LEAFARRAYMAX; i++) {
-            tmpRidArray[i] = leafNode->ridArray[i];
-            copy<T> (tmpKeyArray[i], leafNode->keyArray[i]);
-            leafNode->ridArray[i].page_number = 0;
-        }
-
-        for(int i= LEAFARRAYMAX; i > pos; i--){
-            copy<T> (tmpKeyArray[i], tmpKeyArray[i-1]);
-            tmpRidArray[i] = tmpRidArray[i-1];
-        }
-        copy<T> (tmpKeyArray[pos], ridKeyPair.key);
-        tmpRidArray[pos] = ridKeyPair.rid;
-
-        //reset new and old page
-        for(int i=0; i < LEAFARRAYMAX; i++) {
-            leafNode->ridArray[i].page_number = 0;
-            newLeafNode->ridArray[i].page_number = 0;
-        }
-
-        //copy back
-        for(int i=0; i< (LEAFARRAYMAX + 1) / 2; i++ ){
-            copy<T> (leafNode->keyArray[i], tmpKeyArray[i]);
-            leafNode->ridArray[i] = tmpRidArray[i];
-        }
-        for(int i= (LEAFARRAYMAX + 1) / 2; i < LEAFARRAYMAX + 1; i++){
-            copy<T> (newLeafNode->keyArray[i - (LEAFARRAYMAX + 1) / 2], tmpKeyArray[i]);
-            newLeafNode->ridArray[i - (LEAFARRAYMAX + 1) / 2] = tmpRidArray[i];
-        }
-
-        //link leaf node
-        newLeafNode->rightSibPageNo = leafNode->rightSibPageNo;
-        leafNode->rightSibPageNo = newPageId;
-
-        //push up
-        copy<T> (newValue, newLeafNode->keyArray[0]);
-
-        //unpin
-        bufMgr->unPinPage(file, newPageId, true);
-    };
-
-
-
 /*
  * When the non Leaf need to split it call this nonLeafSplit Helper
  * */
@@ -431,7 +367,107 @@ namespace badgerdb
 
 
 
-/*
+    template <class T1, class T2>
+    void BTreeIndex::addLeafNodeEntry(int indexToInsert, int lastIndex, T1* leafNode, RIDKeyPair<T2> ridKeyPair) {
+        for(int i = lastIndex; i > indexToInsert; i--) {
+            copy<T2> (leafNode->keyArray[i], leafNode->keyArray[i - 1]);
+            leafNode->ridArray[i] = leafNode->ridArray[i - 1];
+        }
+        copy<T2> (leafNode->keyArray[indexToInsert], ridKeyPair.key);
+        leafNode->ridArray[indexToInsert] = ridKeyPair.rid;
+    }
+
+    template <class T1, class T2>
+    void BTreeIndex::splitLeafNode(int max_entries,
+                                   RIDKeyPair<T1> ridKeyPair,
+                                   T2* existingLeafNode,
+                                   PageId& newLeafPageId,
+                                   T1& newKey)
+    {
+        Page* newLeafPage;
+        int currIndex = 0;
+
+        // Allocate new page in buffer pool for the new leaf node and cast it
+        bufMgr->allocPage(file, newLeafPageId, newLeafPage);
+        T2 *newLeafNode = (T2*) newLeafPage;
+
+        /*
+         * Temp arrays to store key and rids.
+         * Arrays have one extra element to account for the case where the leaf node is already full and
+         * we need to insert a key in it.
+         */
+        T1 tempKey[max_entries + 1];
+        RecordId tempRid[max_entries + 1];
+
+        //Find position to insert new key value
+        while (1) {
+            // If current index position is greater than the number if entries, break
+            if (currIndex >= max_entries) {
+                break;
+            }
+
+            // If the next entry points to a page with number 0, break
+            if (existingLeafNode->ridArray[currIndex].page_number == 0) {
+                break;
+            }
+
+            // If the value of the current key if greater than or equal to the the low value, break
+            if (compare<T1>(existingLeafNode->keyArray[currIndex], ridKeyPair.key) > 0) {
+                break;
+            }
+
+            currIndex++;
+        }
+
+        int indexToInsert = currIndex;
+
+        // Copy all entries to temporary array
+        for(int i = 0; i < max_entries; i++) {
+            tempRid[i] = existingLeafNode->ridArray[i];
+            copy<T1> (tempKey[i], existingLeafNode->keyArray[i]);
+            existingLeafNode->ridArray[i].page_number = 0;
+        }
+
+        // Move entries after the indexToInsert position by one to leave space for the new element
+        for(int i= max_entries; i > indexToInsert; i--){
+            copy<T1> (tempKey[i], tempKey[i-1]);
+            tempRid[i] = tempRid[i-1];
+        }
+
+        // Copy the key - record at the indexToInsert position
+        copy<T1> (tempKey[indexToInsert], ridKeyPair.key);
+        tempRid[indexToInsert] = ridKeyPair.rid;
+
+        // Reset all entries in the old and new leaf nodes
+        for(int i=0; i < max_entries; i++) {
+            existingLeafNode->ridArray[i].page_number = 0;
+            newLeafNode->ridArray[i].page_number = 0;
+        }
+
+        // Copy first half of entries into the existing leaf node
+        for(int i=0; i< (max_entries + 1) / 2; i++ ){
+            copy<T1> (existingLeafNode->keyArray[i], tempKey[i]);
+            existingLeafNode->ridArray[i] = tempRid[i];
+        }
+
+        // Copy the second half of entries into the new leaf node
+        for(int i= (max_entries + 1) / 2; i < max_entries + 1; i++){
+            copy<T1> (newLeafNode->keyArray[i - (max_entries + 1) / 2], tempKey[i]);
+            newLeafNode->ridArray[i - (max_entries + 1) / 2] = tempRid[i];
+        }
+
+        // Assign sibling pointers
+        newLeafNode->rightSibPageNo = existingLeafNode->rightSibPageNo;
+        existingLeafNode->rightSibPageNo = newLeafPageId;
+
+        // The new key will be the first entry of the new leaf node
+        copy<T1> (newKey, newLeafNode->keyArray[0]);
+
+        // Unpin the new leaf page created from the buffer pool
+        bufMgr->unPinPage(file, newLeafPageId, true);
+    };
+
+    /*
  * This function will search a position for a new entry.
  * If current page is a non-leaf page, it will find a position and call insertEntryRecursive.
  * If current page is leaf page, it will try to insert new entry.
@@ -484,16 +520,16 @@ namespace badgerdb
 
             if(last < LEAFARRAYMAX){
                 // Not full
-                for(int i = last; i > pos; i--) {
+                addLeafNodeEntry<T1, T>(pos, last, leafNode, ridKeyPair);
+                /*for(int i = last; i > pos; i--) {
                     copy<T> (leafNode->keyArray[i], leafNode->keyArray[i - 1]);
                     leafNode->ridArray[i] = leafNode->ridArray[i - 1];
                 }
                 copy<T> (leafNode->keyArray[pos], ridKeyPair.key);
-                leafNode->ridArray[pos] = ridKeyPair.rid;
+                leafNode->ridArray[pos] = ridKeyPair.rid;*/
             } else {
                 // Full, call split helper.
-                leafSplitHelper<T,T1>(pos, last, LEAFARRAYMAX,
-                                      NONLEAFARRAYMAX, ridKeyPair,leafNode,newPageId,newValue);
+                splitLeafNode<T,T1>(LEAFARRAYMAX, ridKeyPair,leafNode,newPageId,newValue);
             }
 
             leafOccupancy++;
