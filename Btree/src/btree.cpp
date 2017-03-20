@@ -399,28 +399,33 @@ namespace badgerdb
  * This function can only be called once,
  * when the index file is empty and we need to create first leaf node.
  * */
-    template <class T, class T1, class T2>
-    void BTreeIndex::createFirstLeaf(int LEAFARRAYMAX,
-                                     RIDKeyPair<T> ridKeyPair,
-                                     T2* nonLeafNode,
-                                     PageId pageId)
+    template <class T1, class T2, class T3>
+    void BTreeIndex::createLeaf(int max_entries,
+                                     RIDKeyPair<T1> ridKeyPair,
+                                     T3* parentNode,
+                                     PageId parentPageId)
     {
-        PageId newPageId;
-        Page* page;
-        bufMgr->allocPage(file, newPageId, page);
+        PageId leafPageId;
+        Page* leafPage;
 
-        T1* leafNode = (T1*) page;
-        for(int i=0; i < LEAFARRAYMAX; i++)
+        // Allocate page for new leaf node and cast it
+        bufMgr->allocPage(file, leafPageId, leafPage);
+        T2* leafNode = (T2*) leafPage;
+
+        //Initializations for leaf node
+        for(int i=0; i < max_entries; i++) {
             leafNode->ridArray[i].page_number = 0;
-
-        copy<T> (leafNode->keyArray[0], ridKeyPair.key);
+        }
+        copy<T1> (leafNode->keyArray[0], ridKeyPair.key);
         leafNode->ridArray[0] = ridKeyPair.rid;
         leafNode->rightSibPageNo = 0;
-        nonLeafNode->pageNoArray[0] = newPageId;
 
-        //unpin
-        bufMgr->unPinPage(file, newPageId, true);
-        bufMgr->unPinPage(file, pageId, true);
+        // Assign parent node's pointer to the created leaf page number
+        parentNode->pageNoArray[0] = leafPageId;
+
+        // Unpin both the parent node and leaf page from buffer pool
+        bufMgr->unPinPage(file, leafPageId, true);
+        bufMgr->unPinPage(file, parentPageId, true);
 
     };
 
@@ -442,27 +447,44 @@ namespace badgerdb
     {
         if(isLeaf){
             // Read the page
-            Page* page;
-            bufMgr->readPage(file, pageId, page);
-            T1 *leafNode = (T1 *) page;
+            Page* leafPage;
+            bufMgr->readPage(file, pageId, leafPage);
+            T1 *leafNode = (T1 *) leafPage;
 
             // Find position
             int pos = 0;
-            while(biggerThan<T> (ridKeyPair.key, leafNode->keyArray[pos])
-                  && leafNode->ridArray[pos].page_number != 0
-                  && pos < LEAFARRAYMAX)
+            while (1) {
+                // If current index position is greater than the number if entries, break
+                if (pos >= LEAFARRAYMAX) {
+                    break;
+                }
+
+                // If the next entry points to a page with number 0, break
+                if (leafNode->ridArray[pos].page_number == 0) {
+                    break;
+                }
+
+                // If the value of the current key if greater than or equal to the the low value, break
+                if (compare<T>(leafNode->keyArray[pos], ridKeyPair.key) > 0) {
+                    break;
+                }
+
                 pos++;
+            }
 
             // Find last entry
-            int last;
-            for (last =0; last < LEAFARRAYMAX; last++)
-                if(leafNode->ridArray[last].page_number == 0)
-                    break;
+            int last = 0;
 
+            while (last < LEAFARRAYMAX) {
+                if (leafNode->ridArray[last].page_number == 0) {
+                    break;
+                }
+                last++;
+            }
 
             if(last < LEAFARRAYMAX){
                 // Not full
-                for(int i=last; i>pos; i--){
+                for(int i = last; i > pos; i--) {
                     copy<T> (leafNode->keyArray[i], leafNode->keyArray[i - 1]);
                     leafNode->ridArray[i] = leafNode->ridArray[i - 1];
                 }
@@ -481,21 +503,34 @@ namespace badgerdb
         } else {
             // Non leaf
             // Read page
-            Page* page;
-            bufMgr->readPage(file, pageId, page);
-            T2* nonLeafNode = (T2*) page;
+            Page* nonLeafPage;
+            bufMgr->readPage(file, pageId, nonLeafPage);
+            T2* nonLeafNode = (T2*) nonLeafPage;
 
-            // Find pageArray position.
+            // Find pageArray position
             int pos = 0;
+            while (1) {
+                // If current index position is greater than the number if entries, break
+                if (pos >= NONLEAFARRAYMAX) {
+                    break;
+                }
 
-            while(!smallerThan<T> (ridKeyPair.key, nonLeafNode->keyArray[pos])
-                  && nonLeafNode->pageNoArray[pos + 1] != 0
-                  && pos < NONLEAFARRAYMAX)
+                // If the next entry points to a page with number 0, break
+                if (nonLeafNode->pageNoArray[pos + 1] == 0) {
+                    break;
+                }
+
+                // If the value of the current key if greater than or equal to the the low value, break
+                if (compare<T> (nonLeafNode->keyArray[pos], ridKeyPair.key) >= 0) {
+                    break;
+                }
+
                 pos++;
+            }
 
             // Index file is empty.
             if(nonLeafNode->pageNoArray[pos] == 0){
-                createFirstLeaf<T, T1, T2>(LEAFARRAYMAX,
+                createLeaf<T, T1, T2>(LEAFARRAYMAX,
                                            ridKeyPair,
                                            nonLeafNode,
                                            pageId);
@@ -511,9 +546,9 @@ namespace badgerdb
 
             // Check if child split.
             if(newChildPageId != 0){
-                // If child split.
-                bufMgr->readPage(file, pageId, page);
-                T2* nonLeafNode = (T2*) page;
+                // If child split
+                bufMgr->readPage(file, pageId, nonLeafPage);
+                T2* nonLeafNode = (T2*) nonLeafPage;
 
                 // Find last entry.
                 int last;
@@ -547,20 +582,28 @@ namespace badgerdb
  * This function is called when root node got split.
  * We need to create a new root page and link it to the old root page and new page.
  * */
-    template<class T, class T1>
-    void BTreeIndex::handleNewRoot(T& newValue, PageId newPageId, int ARRAYMAX){
-        PageId newRootPageId;
-        Page *newRootPage;
-        bufMgr->allocPage(file, newRootPageId, newRootPage);
+    template<class T1, class T2>
+    void BTreeIndex::createNewRoot(T1& key, PageId newPageId, int max_entries){
+        PageId pageId;
+        Page *rootPage;
 
-        T1 *newRootNonLeafNode = (T1 *) newRootPage;
-        for(int i=0;i<ARRAYMAX + 1; i++) newRootNonLeafNode->pageNoArray[i] = 0;
-        copy<T> (newRootNonLeafNode->keyArray[0], newValue);
-        newRootNonLeafNode->pageNoArray[0] = rootPageNum;
-        newRootNonLeafNode->pageNoArray[1] = newPageId;
-        newRootNonLeafNode->level = 0;
-        rootPageNum = newRootPageId;
-        bufMgr->unPinPage(file, newRootPageId, true);
+        bufMgr->allocPage(file, pageId, rootPage);
+
+        T2 *rootNode = (T2 *) rootPage;
+        for (int i = 0; i <= max_entries; i++) {
+            rootNode->pageNoArray[i] = 0;
+        }
+
+        this->rootPageNum = pageId;
+        rootNode->pageNoArray[0] = this->rootPageNum;
+
+        //TODO - Check this line - ERROR Might occur
+        // rootNode->pageNoArray[1] = newPageId;
+
+        rootNode->level = 0;
+
+        copy<T1>(rootNode->keyArray[0], key);
+        bufMgr->unPinPage(this->file, pageId, true);
     }
 
 // -----------------------------------------------------------------------------
@@ -588,7 +631,7 @@ namespace badgerdb
 
             //if root got split
             if (newPageIdInt != 0)
-                handleNewRoot<int, NonLeafNodeInt>(newValueInt, newPageIdInt, INTARRAYNONLEAFSIZE);
+                createNewRoot<int, NonLeafNodeInt>(newValueInt, newPageIdInt, INTARRAYNONLEAFSIZE);
         } else if (attributeType == DOUBLE) {
             RIDKeyPair<double> ridKeyPairDouble;
             ridKeyPairDouble.set(rid, *((double *) key));
@@ -601,7 +644,7 @@ namespace badgerdb
 
             //if root got split
             if (newPageIdDouble != 0)
-                handleNewRoot<double, NonLeafNodeDouble>(newValueDouble, newPageIdDouble, DOUBLEARRAYNONLEAFSIZE);
+                createNewRoot<double, NonLeafNodeDouble>(newValueDouble, newPageIdDouble, DOUBLEARRAYNONLEAFSIZE);
         } else if (attributeType == STRING){
             RIDKeyPair<char[STRINGSIZE] > ridKeyPairString;
             ridKeyPairString.rid = rid;
@@ -615,7 +658,7 @@ namespace badgerdb
 
             //if root got split
             if (newPageId != 0)
-                handleNewRoot<char[STRINGSIZE], NonLeafNodeString>(newValue, newPageId, STRINGARRAYNONLEAFSIZE);
+                createNewRoot<char[STRINGSIZE], NonLeafNodeString>(newValue, newPageId, STRINGARRAYNONLEAFSIZE);
         }
 
     }
@@ -779,6 +822,8 @@ namespace badgerdb
         while (1) {
             // If current index position is greater than the number if entries, break
             if (currIndex >= arrayLength) {
+                //TODO - check for other conditions for key not being present in index
+                throw NoSuchKeyFoundException();
                 break;
             }
 

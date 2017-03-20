@@ -506,10 +506,10 @@ at this level are just above the leaf nodes. Otherwise set to 0.
            * @param nonLeafNode		Current page, which will always be the root page.
            * @param pageId			PageID for current page.
           **/
-		template <class T, class T1, class T2>
-		void createFirstLeaf(int LEAFARRAYMAX,
-							 RIDKeyPair<T> ridKeyPair,
-							 T2* nonLeafNode,
+		template <class T1, class T2, class T3>
+		void createLeaf(int max_entries,
+							 RIDKeyPair<T1> ridKeyPair,
+							 T3* nonLeafNode,
 							 PageId pageId);
 
 		/**
@@ -519,8 +519,8 @@ at this level are just above the leaf nodes. Otherwise set to 0.
            * @param newPageId		Page id of new child page.
            * @param ARRAYMAX		Length of array of non-leaf page.
           **/
-		template<class T, class T1>
-		void handleNewRoot(T& newValue, PageId newPageId, int ARRAYMAX);
+		template<class T1, class T2>
+		void createNewRoot(T1& key, PageId newPageId, int max_entries);
 
 		/**
            * Begin a filtered scan of the index.  For instance, if the method is called
