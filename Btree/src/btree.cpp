@@ -216,9 +216,7 @@ namespace badgerdb
         delete this->file;
     }
 
-/*
- * When the non Leaf need to split it call this nonLeafSplit Helper
- * */
+
     template <class T1, class T2>
     void  BTreeIndex::splitNonLeafNode(int indexToInsert,
                                          int max_entries,
@@ -309,8 +307,7 @@ namespace badgerdb
                                    RIDKeyPair<T1> ridKeyPair,
                                    T2* existingLeafNode,
                                    PageId& newLeafPageId,
-                                   T1& newKey)
-    {
+                                   T1& newKey) {
         Page* newLeafPage;
         int currIndex = 0;
 
@@ -394,11 +391,7 @@ namespace badgerdb
         bufMgr->unPinPage(file, newLeafPageId, true);
     };
 
-    /*
- * This function will search a position for a new entry.
- * If current page is a non-leaf page, it will find a position and call insertEntryRecursive.
- * If current page is leaf page, it will try to insert new entry.
- * */
+
     template <class T1, class T2, class T3>
     void BTreeIndex::insertEntry_(RIDKeyPair<T1> ridKeyPair,
                                           PageId pageId,
@@ -406,8 +399,7 @@ namespace badgerdb
                                           int max_entries_leaf,
                                           int max_entries_non_leaf,
                                           T1 & newValue,
-                                          PageId& newPageId)
-    {
+                                          PageId& newPageId) {
         if(isLeafNode){
             // Read the page
             Page* leafPage;
@@ -557,10 +549,7 @@ namespace badgerdb
         }
     }
 
-/*
- * This function is called when root node got split.
- * We need to create a new root page and link it to the old root page and new page.
- * */
+
     template<class T1, class T2>
     void BTreeIndex::createNewRoot(T1& key, PageId newPageId, int max_entries){
         PageId pageId;
@@ -671,7 +660,7 @@ namespace badgerdb
 
     template <>
     void BTreeIndex::copy<char[STRINGSIZE]>(char (&a)[STRINGSIZE], char (&b)[STRINGSIZE]){
-        strncpy( a, b, STRINGSIZE);
+        strncpy(a, b, STRINGSIZE);
     }
 
 

@@ -441,74 +441,6 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 		const void insertEntry(const void* key, const RecordId rid);
 
 		/**
-           * This function will search a position for a new entry.
-           * If current page is a non-leaf page, it will find a position and call insertEntryRecursive.
-           * If current page is leaf page, it will try to insert new entry.
-           * @param ridKeyPair		The new entry that need to insert.
-           * @param pageId			Current page number.
-           * @param isLeaf			Whether current leaf is leaf page.
-           * @param LEAFARRAYMAX	Length of leaf page array.
-           * @param NONLEAFARRAYMAX	Length of non-leaf page array.
-           * @param newValue		Need value pushed up by the child.
-           * @param newPage			Page number of the new child page.
-          **/
-		template <class T, class T1, class T2>
-		void insertEntry_(RIDKeyPair<T > ridKeyPair,
-								  PageId pageId,
-								  bool isLeaf,
-								  int LEAFARRAYMAX,
-								  int NONLEAFARRAYMAX,
-								  T& newValue,
-								  PageId& newPage);
-
-		/**
-           * Helper function when a leaf node need to split.
-           * @param pos				Insert position.
-           * @param last			last position for this node.
-           * @param LEAFARRAYMAX	Length of leaf page array.
-           * @param NONLEAFARRAYMAX	Length of non-leaf page array.
-           * @param ridKeyPair		The new entry that need to insert.
-           * @param leafNode		Pointer to current page.
-           * @param newPageId		Need value pushed up
-           * @param newValue		Page number of the new page.
-          **/
-		template <class T1, class T2>
-		void splitLeafNode(int max_entries,
-							 RIDKeyPair<T1> ridKeyPair,
-							 T2* existingLeafNode,
-							 PageId& newLeafPageId,
-							 T1& newKey);
-
-		/**
-           * Helper function when a nonleaf node need to split.
-           * @param pos				Insert position.
-           * @param NONLEAFARRAYMAX	Length of non-leaf page array.
-           * @param nonLeafNode		Pointer to current page.
-           * @param newPageId		Need value pushed up
-           * @param newValue		Page number of the new page.
-           * @param newChildValue	Need value pushed up by the child.
-           * @param newChildPageId	Page number of the new child page.
-          **/
-		template <class T1, class T2>
-		void splitNonLeafNode(int indexToInsert,
-								int max_entries,
-								T2* nonLeafNode,
-								PageId& newPageId,
-								T1& newKeyToParent,
-								T1& newKeyFromChild,
-								PageId newChildPageId);
-
-		/**
-           * This function is called when root node got split.
-           * We need to create a new root page and link it to the old root page and new page.
-           * @param newValue		Key value pushed up bi child.
-           * @param newPageId		Page id of new child page.
-           * @param ARRAYMAX		Length of array of non-leaf page.
-          **/
-		template<class T1, class T2>
-		void createNewRoot(T1& key, PageId newPageId, int max_entries);
-
-		/**
            * Begin a filtered scan of the index.  For instance, if the method is called
            * using ("a",GT,"d",LTE) then we should seek all entries with a value
            * greater than "a" and less than or equal to "d".
@@ -525,22 +457,6 @@ at this level are just above the leaf nodes. Otherwise set to 0.
           **/
 		const void startScan(const void* lowVal, const Operator lowOp, const void* highVal, const Operator highOp);
 
-
-		/**
-        * This function helps the startScan function.
-         * T is the data type.
-         * T1 is the non-leaf struct.
-         * This function is called by the startScan and do the work.
-         * @param lowValParm		Low value of the search range.
-         * @param highValParm		High value of the search range.
-         * @param ARRAYMAX			Length of the non-leaf array.
-        * @throws BadScanrangeException If lowVal > highval
-        **/
-		template<class T, class T1>
-		void startScanHelper(T lowValParm,
-							 T highValParm,
-							 int ARRAYMAX);
-
 		/**
            * Fetch the record id of the next index entry that matches the scan.
            * Return the next record from current page being scanned. If current page has been scanned to its entirety, move on to the right sibling of current page, if any exists, to start scanning that page. Make sure to unpin any pages that are no longer required.
@@ -551,45 +467,138 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 		const void scanNext(RecordId& outRid);  // returned record id
 
 		/**
-              * This function helps the scanNext.
-              * T is the data type.
-              * T1 is the leaf struct type.
-            * This function is called by the scanNext and do the scan next work.
-            * It starts to scan from the first value,
-            * which is the position of low value.
-            * If current page is full or reach the right most entry in the current page,
-            * we use leafNode->right to jump to the next right page to continue scan the entry.
-            * If we get to the last leaf node or the key is larger than high value,
-            * then the scan is finish.
-          * @param outRid       Output rid.
-          * @param lowVal		The low value of the search range.
-          * @param highVal		The high value of the search range	.
-          * @param ARRAYMAX		The length of the leaf array.
-          */
-		template <class T, class T1>
-		void scanNextHelper(RecordId& outRid, T lowVal, T highVal, int ARRAYMAX);
-
-		/**
            * Terminate the current scan. Unpin any pinned pages. Reset scan specific variables.
            * @throws ScanNotInitializedException If no scan has been initialized.
           **/
 		const void endScan();
 
+		/**
+		 * Compares two values
+		 * @tparam T Class of values to be compared
+		 * @param a First value
+		 * @param b Second value
+		 * @return 1 if a is greater than b; -1 if a is lesser than b and 0 if both are equal
+		 */
 		template <class T>
 		int compare(T a, T b);
 
+		/**
+		 * Copies one variable value to another value
+		 * @tparam T Class of values to be copied
+		 * @param a Destination variable
+		 * @param b Source variable
+		 */
 		template <class T>
 		void copy(T &a, T &b);
 
+		/**
+		 * Validates the operators given for scanning a relation
+		 * @param lowOpParm Lower operator parameter
+		 * @param highOpParm Higher operator parameter
+		 */
 		void validateOperators(const Operator &lowOpParm, const Operator &highOpParm) const;
 
+		/**
+		 * Check is low values are lower than or equal to higher values
+		 * @param lowValParm Lower value
+		 * @param highValParm Higher Value
+		 */
 		void validateLowAndHighValues(const void *lowValParm, const void *highValParm);
 
+		/**
+		 * Finds the leaf page containing the keys less than/equal to the low value parameter
+		 * @tparam T1 Class of the parameter
+		 * @tparam T2 Class of the leaf node
+		 * @param lowValParm
+		 * @param arrayLength Maximum number of entries in leaf node
+		 */
 		template <class T1, class T2>
 		void findLeafPage(T1 lowValParm, int arrayLength);
 
+		/**
+		 * Adds a key-rid pair to leaf node
+		 * @tparam T1 Class of leaf node
+		 * @tparam T2 Class of key value to insert
+		 * @param indexToInsert Index in leaf node where entry is to be inserted
+		 * @param lastIndex Last index in the leaf node which contains a valid entry
+		 * @param leafNode Leaf node in which the key-rid pair is to be inserted
+		 * @param ridKeyPair The key-rid pair to be inserted in leaf node
+		 */
 		template <class T1, class T2>
 		void addLeafNodeEntry(int indexToInsert, int lastIndex, T1* leafNode, RIDKeyPair<T2> ridKeyPair);
+		
+		/**
+		 *
+		 * @tparam T1 Class of key in the index
+		 * @tparam T2 Class of the leaf node
+		 * @tparam T3 Class of the non leaf node
+		 * @param ridKeyPair The rid-key pair that we want to insert
+		 * @param pageId Page id of the current page we are looking at
+		 * @param isLeaf 1 if the node is a leaf node
+		 * @param max_entries_leaf Maximum number of key-rid pairs the leaf node can hold
+		 * @param max_entries_non_leaf Maximum number of key-page id pairs the non - leaf node can hold
+		 * @param newValue The new value that is pushed up from the leaf node
+		 * @param newPage Page id of the new leaf node that is created
+		 */
+		template <class T1, class T2, class T3>
+		void insertEntry_(RIDKeyPair<T1> ridKeyPair,
+						  PageId pageId,
+						  bool isLeaf,
+						  int max_entries_leaf,
+						  int max_entries_non_leaf,
+						  T1& newValue,
+						  PageId& newPage);
+
+		/**
+		 * Splits a non leaf node, redistributes entries and updates book keeping information
+		 * @tparam T1 Class of the key in the index
+		 * @tparam T2 Class of the leaf node that is split
+		 * @param max_entries Maximum number of key-rid pairs the leaf node can hold
+		 * @param ridKeyPair The rid-key pair that is to be inserted
+		 * @param existingLeafNode The leaf node that is being split
+		 * @param newLeafPageId The new leaf node that is created
+		 * @param newKey The new key that is going to be pushed to the parent non-leaf
+		 * 				 node as a result of the leaf being split
+		 */
+		template <class T1, class T2>
+		void splitLeafNode(int max_entries,
+						   RIDKeyPair<T1> ridKeyPair,
+						   T2* existingLeafNode,
+						   PageId& newLeafPageId,
+						   T1& newKey);
+
+		/**
+		 * Splits a non leaf node, redistributes entries and updates book keeping information
+		 * @tparam T1 Class of key in the index
+		 * @tparam T2 Class of the non leaf node that is split
+		 * @param indexToInsert Index at which the key-page id pair is to be inserted
+		 * @param max_entries Maximum number of key-page id pairs the non-leaf node can hold
+		 * @param nonLeafNode The node that is going to be split
+		 * @param newPageId The page id of the new non leaf node
+		 * @param newKeyToParent The new key that is to be pushed to the parent node
+		 * @param newKeyFromChild The new key that is to be inserted in the non leaf node
+		 * @param newChildPageId The pointer to the child page which is to be inserted in the non leaf node
+		 */
+		template <class T1, class T2>
+		void splitNonLeafNode(int indexToInsert,
+							  int max_entries,
+							  T2* nonLeafNode,
+							  PageId& newPageId,
+							  T1& newKeyToParent,
+							  T1& newKeyFromChild,
+							  PageId newChildPageId);
+
+		/**
+		 * Creates a new root node when the existing root node exceeds its capacity.
+         * Changes the book keeping information to point to the new root and updates pointers/
+		 * @tparam T1 Class of key in the index
+		 * @tparam T2 Class of the root (non-leaf) node
+		 * @param key Key of the new root node
+		 * @param newPageId PageId of the new root node
+		 * @param max_entries Maximum number of key-page no pairs the root node can hold
+		 */
+		template<class T1, class T2>
+		void createNewRoot(T1& key, PageId newPageId, int max_entries);
 
 	};
 
