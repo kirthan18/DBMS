@@ -28,42 +28,7 @@ namespace badgerdb
 // -----------------------------------------------------------------------------
 // BTreeIndex::BTreeIndex -- Template
 // -----------------------------------------------------------------------------
-// copy b to a
-    template <class T>
-    void copy(T& a, T& b){
-        a = b;
-    }
 
-// specialiazation char[STRINGSIZE] copy
-    template <>
-    void copy<char[STRINGSIZE]>(char (&a)[STRINGSIZE], char (&b)[STRINGSIZE]){
-        strncpy( a, b, STRINGSIZE);
-        //a[STRINGSIZE - 1] = '\0';
-    }
-
-// Type T small than comparison
-    template <class T>
-    bool smallerThan(T a, T b){
-        return a<b;
-    }
-
-// specialiazation char[STRINGSIZE] smaller comparison
-    template <>
-    bool smallerThan<char[STRINGSIZE]>(char a[STRINGSIZE], char b[STRINGSIZE]){
-        return strncmp(a, b, STRINGSIZE) < 0;
-    }
-
-//  Type T bigger comparison
-    template <class T>
-    bool biggerThan(T a, T b){
-        return a>b;
-    }
-
-// specialization char[STRINGSIZE] bigger comparison
-    template <>
-    bool biggerThan<char[STRINGSIZE]>(char a[STRINGSIZE], char b[STRINGSIZE]){
-        return strncmp(a, b, STRINGSIZE) > 0;
-    }
 
     void initializeLeafNodes(const Datatype attrType, Page *rootPage) {
         switch (attrType) {
@@ -108,9 +73,8 @@ namespace badgerdb
                            const Datatype attrType)
     {
         // Initializations to be done
-/*
         this->leafOccupancy = 0;
-        this->nodeOccupancy = 0;*/
+        this->nodeOccupancy = 0;
 
         // Obtaining index file name from relation and attribute byte offset
         std::ostringstream	idxStr;
@@ -330,44 +294,6 @@ namespace badgerdb
         bufMgr->unPinPage(file, newPageId, true);
     };
 
-
-/*
- * Helper function when we need create a new page.
- * This function can only be called once,
- * when the index file is empty and we need to create first leaf node.
- * */
-    template <class T1, class T2, class T3>
-    void BTreeIndex::createLeaf(int max_entries,
-                                     RIDKeyPair<T1> ridKeyPair,
-                                     T3* parentNode,
-                                     PageId parentPageId)
-    {
-        PageId leafPageId;
-        Page* leafPage;
-
-        // Allocate page for new leaf node and cast it
-        bufMgr->allocPage(file, leafPageId, leafPage);
-        T2* leafNode = (T2*) leafPage;
-
-        //Initializations for leaf node
-        for(int i=0; i < max_entries; i++) {
-            leafNode->ridArray[i].page_number = 0;
-        }
-        copy<T1> (leafNode->keyArray[0], ridKeyPair.key);
-        leafNode->ridArray[0] = ridKeyPair.rid;
-        leafNode->rightSibPageNo = 0;
-
-        // Assign parent node's pointer to the created leaf page number
-        parentNode->pageNoArray[0] = leafPageId;
-
-        // Unpin both the parent node and leaf page from buffer pool
-        bufMgr->unPinPage(file, leafPageId, true);
-        bufMgr->unPinPage(file, parentPageId, true);
-
-    };
-
-
-
     template <class T1, class T2>
     void BTreeIndex::addLeafNodeEntry(int indexToInsert, int lastIndex, T1* leafNode, RIDKeyPair<T2> ridKeyPair) {
         for(int i = lastIndex; i > indexToInsert; i--) {
@@ -377,7 +303,7 @@ namespace badgerdb
         copy<T2> (leafNode->keyArray[indexToInsert], ridKeyPair.key);
         leafNode->ridArray[indexToInsert] = ridKeyPair.rid;
     }
-    
+
     template <class T1, class T2>
     void BTreeIndex::splitLeafNode(int max_entries,
                                    RIDKeyPair<T1> ridKeyPair,
@@ -474,7 +400,7 @@ namespace badgerdb
  * If current page is leaf page, it will try to insert new entry.
  * */
     template <class T1, class T2, class T3>
-    void BTreeIndex::insertEntryRecursive(RIDKeyPair<T1> ridKeyPair,
+    void BTreeIndex::insertEntry_(RIDKeyPair<T1> ridKeyPair,
                                           PageId pageId,
                                           bool isLeafNode,
                                           int max_entries_leaf,
@@ -536,8 +462,6 @@ namespace badgerdb
             bufMgr->unPinPage(file, pageId, true);
 
         } else {
-            // Non leaf
-            // Read page
             Page* nonLeafPage;
             bufMgr->readPage(file, pageId, nonLeafPage);
             T3* nonLeafNode = (T3*) nonLeafPage;
@@ -565,7 +489,27 @@ namespace badgerdb
 
             // Index file is empty.
             if(nonLeafNode->pageNoArray[currIndex] == 0){
-                createLeaf<T1, T2, T3>(max_entries_leaf, ridKeyPair, nonLeafNode, pageId);
+                PageId leafPageId;
+                Page* leafPage;
+
+                // Allocate page for new leaf node and cast it
+                bufMgr->allocPage(this->file, leafPageId, leafPage);
+                T2* leafNode = (T2*) leafPage;
+
+                //Initializations for leaf node
+                for(int i = 0; i < max_entries_leaf; i++) {
+                    leafNode->ridArray[i].page_number = 0;
+                }
+                copy<T1> (leafNode->keyArray[0], ridKeyPair.key);
+                leafNode->ridArray[0] = ridKeyPair.rid;
+                leafNode->rightSibPageNo = 0;
+
+                // Assign parent node's pointer to the created leaf page number
+                nonLeafNode->pageNoArray[0] = leafPageId;
+
+                // Unpin both the parent node and leaf page from buffer pool
+                bufMgr->unPinPage(this->file, leafPageId, true);
+                bufMgr->unPinPage(this->file, pageId, true);
                 return;
             }
 
@@ -574,7 +518,7 @@ namespace badgerdb
             PageId newChildPageId = 0;
 
             bool isLeafNode = nonLeafNode->level == 1? true: false;
-            insertEntryRecursive<T1, T2, T3>(ridKeyPair, nonLeafNode->pageNoArray[currIndex], isLeafNode,
+            insertEntry_<T1, T2, T3>(ridKeyPair, nonLeafNode->pageNoArray[currIndex], isLeafNode,
                     max_entries_leaf, max_entries_non_leaf, newChildValue, newChildPageId);
 
             // Check if child split.
@@ -644,58 +588,70 @@ namespace badgerdb
 // -----------------------------------------------------------------------------
 // BTreeIndex::insertEntry
 // -----------------------------------------------------------------------------
-/*
- * Insert a new entry using the pair <value,rid>.
- * Start from root to recursively find out the leaf to insert the entry in. The insertion may cause splitting of leaf node.
- * This splitting will require addition of new leaf page number entry into the parent non-leaf, which may in-turn get split.
- * This may continue all the way upto the root causing the root to get split. If root gets split, metapage needs to be changed accordingly.
- * Make sure to unpin pages as soon as you can.
- * */
     const void BTreeIndex::insertEntry(const void *key, const RecordId rid)
     {
+        switch (this->attributeType) {
+            case INTEGER: {
+                PageId newPageIdInt = 0;
+                int newValueInt;
+                int key_ = *((int *) key);
+                RIDKeyPair<int> ridKeyPairInt;
 
-        if(attributeType == INTEGER) {
-            RIDKeyPair<int> ridKeyPairInt;
-            ridKeyPairInt.set(rid, *((int *) key));
-            int newValueInt;
-            PageId newPageIdInt = 0;
+                ridKeyPairInt.set(rid, key_);
+                insertEntry_<int, LeafNodeInt, NonLeafNodeInt>
+                        (ridKeyPairInt, rootPageNum, 0, INTARRAYLEAFSIZE, INTARRAYNONLEAFSIZE, newValueInt,
+                         newPageIdInt);
 
-            //call recursive function
-            insertEntryRecursive<int, LeafNodeInt, NonLeafNodeInt>
-                    (ridKeyPairInt, rootPageNum, 0, INTARRAYLEAFSIZE, INTARRAYNONLEAFSIZE, newValueInt, newPageIdInt);
+                // Check if root node is split
+                if (newPageIdInt != 0) {
+                    //Since root node is more than full, create a new root
+                    createNewRoot<int, NonLeafNodeInt>(newValueInt, newPageIdInt, INTARRAYNONLEAFSIZE);
+                }
+                break;
+            }
 
-            //if root got split
-            if (newPageIdInt != 0)
-                createNewRoot<int, NonLeafNodeInt>(newValueInt, newPageIdInt, INTARRAYNONLEAFSIZE);
-        } else if (attributeType == DOUBLE) {
-            RIDKeyPair<double> ridKeyPairDouble;
-            ridKeyPairDouble.set(rid, *((double *) key));
-            double newValueDouble;
-            PageId newPageIdDouble = 0;
+            case DOUBLE: {
+                PageId newPageIdDouble = 0;
+                double newValueDouble;
+                double key_ = *((double *) key);
+                RIDKeyPair<double> ridKeyPairDouble;
 
-            //call recursive function
-            insertEntryRecursive<double, LeafNodeDouble, NonLeafNodeDouble>
-                    (ridKeyPairDouble, rootPageNum, 0, DOUBLEARRAYLEAFSIZE, DOUBLEARRAYNONLEAFSIZE, newValueDouble, newPageIdDouble);
 
-            //if root got split
-            if (newPageIdDouble != 0)
-                createNewRoot<double, NonLeafNodeDouble>(newValueDouble, newPageIdDouble, DOUBLEARRAYNONLEAFSIZE);
-        } else if (attributeType == STRING){
-            RIDKeyPair<char[STRINGSIZE] > ridKeyPairString;
-            ridKeyPairString.rid = rid;
-            strncpy(ridKeyPairString.key, (char*) key, STRINGSIZE);
-            char newValue[STRINGSIZE];
-            PageId newPageId = 0;
+                ridKeyPairDouble.set(rid, key_);
+                insertEntry_<double, LeafNodeDouble, NonLeafNodeDouble>
+                        (ridKeyPairDouble, rootPageNum, 0, DOUBLEARRAYLEAFSIZE, DOUBLEARRAYNONLEAFSIZE, newValueDouble,
+                         newPageIdDouble);
 
-            //call recursive function
-            insertEntryRecursive<char[STRINGSIZE], LeafNodeString, NonLeafNodeString>
-                    (ridKeyPairString, rootPageNum, 0, STRINGARRAYLEAFSIZE, STRINGARRAYNONLEAFSIZE, newValue, newPageId);
+                // Check if root node is split
+                if (newPageIdDouble != 0) {
+                    //Since root node is more than full, create a new root
+                    createNewRoot<double, NonLeafNodeDouble>(newValueDouble, newPageIdDouble, DOUBLEARRAYNONLEAFSIZE);
+                }
+                break;
+            }
 
-            //if root got split
-            if (newPageId != 0)
-                createNewRoot<char[STRINGSIZE], NonLeafNodeString>(newValue, newPageId, STRINGARRAYNONLEAFSIZE);
+            case STRING: {
+                PageId newPageIdString = 0;
+                char newValue[STRINGSIZE];
+                RIDKeyPair<char[STRINGSIZE]> ridKeyPairString;
+
+
+                ridKeyPairString.rid = rid;
+                strncpy(ridKeyPairString.key, (char *) key, STRINGSIZE);
+                insertEntry_<char[STRINGSIZE], LeafNodeString, NonLeafNodeString>
+                (ridKeyPairString, rootPageNum, 0, STRINGARRAYLEAFSIZE, STRINGARRAYNONLEAFSIZE, newValue, newPageIdString);
+
+                // Check if root node is split
+                if (newPageIdString != 0) {
+                    //Since root node is more than full, create a new root
+                    createNewRoot <char[STRINGSIZE], NonLeafNodeString> (newValue, newPageIdString, STRINGARRAYNONLEAFSIZE);
+                }
+                break;
+            }
+
+            default:
+                return;
         }
-
     }
 
     template <class T>
@@ -707,6 +663,17 @@ namespace badgerdb
         }
         return -1;
     }
+
+    template <class T>
+    void BTreeIndex::copy(T& a, T& b){
+        a = b;
+    }
+
+    template <>
+    void BTreeIndex::copy<char[STRINGSIZE]>(char (&a)[STRINGSIZE], char (&b)[STRINGSIZE]){
+        strncpy( a, b, STRINGSIZE);
+    }
+
 
     void BTreeIndex::validateLowAndHighValues(const void *lowValParm, const void *highValParm) {
         bool isScanRangeValid = true;
@@ -844,10 +811,14 @@ namespace badgerdb
                 currIndex++;
             }
 
-            PageId nextPageId = currentNonLeafNode->pageNoArray[currIndex];
-            this->bufMgr->readPage(this->file, nextPageId, this->currentPageData);
+            // Unpin the previously read page
             this->bufMgr->unPinPage(this->file, this->currentPageNum, false);
-            this->currentPageNum = nextPageId;
+
+            // Read page pointed by currIndex
+            this->bufMgr->readPage(this->file, currentNonLeafNode->pageNoArray[currIndex], this->currentPageData);
+
+            // Set the current page number to the page pointed by currIndex
+            this->currentPageNum = currentNonLeafNode->pageNoArray[currIndex];
             currentNonLeafNode = (T2*) this->currentPageData;
         }
 
@@ -875,15 +846,20 @@ namespace badgerdb
             currIndex++;
         }
 
-        PageId nextPageId = currentNonLeafNode->pageNoArray[currIndex];
-        this->bufMgr->readPage(this->file, nextPageId, this->currentPageData);
-        this->bufMgr->unPinPage(this->file, this->currentPageNum, false);
-        this->currentPageNum = nextPageId;
         nextEntry = 0;
+
+        // Unpin the previously read page
+        this->bufMgr->unPinPage(this->file, this->currentPageNum, false);
+
+        // Read page pointed by currIndex
+        this->bufMgr->readPage(this->file, currentNonLeafNode->pageNoArray[currIndex], this->currentPageData);
+
+        // Set the current page number to the page pointed by currIndex
+        this->currentPageNum = currentNonLeafNode->pageNoArray[currIndex];
     }
 
 
-    // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // BTreeIndex::scanNext
 // -----------------------------------------------------------------------------
     const void BTreeIndex::scanNext(RecordId& outRid)

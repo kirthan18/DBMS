@@ -453,7 +453,7 @@ at this level are just above the leaf nodes. Otherwise set to 0.
            * @param newPage			Page number of the new child page.
           **/
 		template <class T, class T1, class T2>
-		void insertEntryRecursive(RIDKeyPair<T > ridKeyPair,
+		void insertEntry_(RIDKeyPair<T > ridKeyPair,
 								  PageId pageId,
 								  bool isLeaf,
 								  int LEAFARRAYMAX,
@@ -497,19 +497,6 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 								T1& newKeyToParent,
 								T1& newKeyFromChild,
 								PageId newChildPageId);
-
-		/**
-           * Helper function when we need create a new page.
-           * This function can only be called once, when the index file is empty and we need to create first leaf node.
-           * @param LEAFARRAYMAX	Length of leaf page array.
-           * @param nonLeafNode		Current page, which will always be the root page.
-           * @param pageId			PageID for current page.
-          **/
-		template <class T1, class T2, class T3>
-		void createLeaf(int max_entries,
-							 RIDKeyPair<T1> ridKeyPair,
-							 T3* nonLeafNode,
-							 PageId pageId);
 
 		/**
            * This function is called when root node got split.
@@ -590,6 +577,9 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 
 		template <class T>
 		int compare(T a, T b);
+
+		template <class T>
+		void copy(T &a, T &b);
 
 		void validateOperators(const Operator &lowOpParm, const Operator &highOpParm) const;
 
