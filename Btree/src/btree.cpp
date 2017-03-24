@@ -218,13 +218,8 @@ namespace badgerdb
 
 
     template <class T1, class T2>
-    void  BTreeIndex::splitNonLeafNode(int indexToInsert,
-                                         int max_entries,
-                                         T2* nonLeafNode,
-                                         PageId& newPageId,
-                                         T1& newKeyToParent,
-                                         T1&  newKeyFromChild,
-                                         PageId newChildPageId){
+    void  BTreeIndex::splitNonLeafNode(int indexToInsert, int max_entries, T2* nonLeafNode, T1& newKeyToParent,
+                                       T1& newKeyFromChild, PageId& newPageId, PageId newChildPageId){
         //full, need split
         Page* newNonLeafPage;
         bufMgr->allocPage(file, newPageId, newNonLeafPage);
@@ -304,10 +299,10 @@ namespace badgerdb
 
     template <class T1, class T2>
     void BTreeIndex::splitLeafNode(int max_entries,
-                                   RIDKeyPair<T1> ridKeyPair,
                                    T2* existingLeafNode,
                                    PageId& newLeafPageId,
-                                   T1& newKey) {
+                                   T1& newKey,
+                                   RIDKeyPair<T1> ridKeyPair) {
         Page* newLeafPage;
         int currIndex = 0;
 
@@ -393,13 +388,8 @@ namespace badgerdb
 
 
     template <class T1, class T2, class T3>
-    void BTreeIndex::insertEntry_(RIDKeyPair<T1> ridKeyPair,
-                                          PageId pageId,
-                                          bool isLeafNode,
-                                          int max_entries_leaf,
-                                          int max_entries_non_leaf,
-                                          T1 & newValue,
-                                          PageId& newPageId) {
+    void BTreeIndex::insertEntry_ (bool isLeafNode, int max_entries_leaf, int max_entries_non_leaf, T1& newValue,
+                                   PageId pageId, PageId& newPageId, RIDKeyPair<T1> ridKeyPair) {
         if(isLeafNode){
             // Read the page
             Page* leafPage;
@@ -444,7 +434,7 @@ namespace badgerdb
             } else {
                 // Leaf node is full
                 // Split leaf node and insert
-                splitLeafNode<T1,T2>(max_entries_leaf, ridKeyPair,leafNode,newPageId,newValue);
+                splitLeafNode<T1,T2>(max_entries_leaf, leafNode, newPageId, newValue, ridKeyPair);
             }
 
             leafOccupancy++;
@@ -510,8 +500,8 @@ namespace badgerdb
             PageId newChildPageId = 0;
 
             bool isLeafNode = nonLeafNode->level == 1? true: false;
-            insertEntry_<T1, T2, T3>(ridKeyPair, nonLeafNode->pageNoArray[currIndex], isLeafNode,
-                    max_entries_leaf, max_entries_non_leaf, newChildValue, newChildPageId);
+            insertEntry_<T1, T2, T3>(isLeafNode, max_entries_leaf, max_entries_non_leaf, newChildValue,
+                    nonLeafNode->pageNoArray[currIndex], newChildPageId, ridKeyPair);
 
             // Check if child split.
             if(newChildPageId != 0){
@@ -539,8 +529,8 @@ namespace badgerdb
                 }
                 else{
                     // Node is full - split node and insert new key
-                    splitNonLeafNode<T1, T3>(currIndex, max_entries_non_leaf, nonLeafNode,newPageId,newValue,
-                                              newChildValue,newChildPageId);
+                    splitNonLeafNode<T1, T3>(currIndex, max_entries_non_leaf, nonLeafNode, newValue, newChildValue,
+                                             newPageId, newChildPageId);
                 }
 
                 nodeOccupancy++;
@@ -587,9 +577,8 @@ namespace badgerdb
                 RIDKeyPair<int> ridKeyPairInt;
 
                 ridKeyPairInt.set(rid, key_);
-                insertEntry_<int, LeafNodeInt, NonLeafNodeInt>
-                        (ridKeyPairInt, rootPageNum, 0, INTARRAYLEAFSIZE, INTARRAYNONLEAFSIZE, newValueInt,
-                         newPageIdInt);
+                insertEntry_<int, LeafNodeInt, NonLeafNodeInt> (0, INTARRAYLEAFSIZE, INTARRAYNONLEAFSIZE, newValueInt,
+                                                                rootPageNum, newPageIdInt, ridKeyPairInt);
 
                 // Check if root node is split
                 if (newPageIdInt != 0) {
@@ -607,9 +596,9 @@ namespace badgerdb
 
 
                 ridKeyPairDouble.set(rid, key_);
-                insertEntry_<double, LeafNodeDouble, NonLeafNodeDouble>
-                        (ridKeyPairDouble, rootPageNum, 0, DOUBLEARRAYLEAFSIZE, DOUBLEARRAYNONLEAFSIZE, newValueDouble,
-                         newPageIdDouble);
+                insertEntry_<double, LeafNodeDouble, NonLeafNodeDouble> (0, DOUBLEARRAYLEAFSIZE, DOUBLEARRAYNONLEAFSIZE,
+                                                                         newValueDouble, rootPageNum, newPageIdDouble,
+                                                                         ridKeyPairDouble);
 
                 // Check if root node is split
                 if (newPageIdDouble != 0) {
@@ -627,8 +616,8 @@ namespace badgerdb
 
                 ridKeyPairString.rid = rid;
                 strncpy(ridKeyPairString.key, (char *) key, STRINGSIZE);
-                insertEntry_<char[STRINGSIZE], LeafNodeString, NonLeafNodeString>
-                (ridKeyPairString, rootPageNum, 0, STRINGARRAYLEAFSIZE, STRINGARRAYNONLEAFSIZE, newValue, newPageIdString);
+                insertEntry_<char[STRINGSIZE], LeafNodeString, NonLeafNodeString> (0, STRINGARRAYLEAFSIZE,
+                        STRINGARRAYNONLEAFSIZE, newValue, rootPageNum, newPageIdString, ridKeyPairString);
 
                 // Check if root node is split
                 if (newPageIdString != 0) {

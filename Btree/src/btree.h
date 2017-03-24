@@ -541,13 +541,13 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 		 * @param newPage Page id of the new leaf node that is created
 		 */
 		template <class T1, class T2, class T3>
-		void insertEntry_(RIDKeyPair<T1> ridKeyPair,
-						  PageId pageId,
-						  bool isLeaf,
+		void insertEntry_(bool isLeaf,
 						  int max_entries_leaf,
 						  int max_entries_non_leaf,
 						  T1& newValue,
-						  PageId& newPage);
+						  PageId pageId,
+						  PageId& newPage,
+						  RIDKeyPair<T1> ridKeyPair);
 
 		/**
 		 * Splits a non leaf node, redistributes entries and updates book keeping information
@@ -562,10 +562,10 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 		 */
 		template <class T1, class T2>
 		void splitLeafNode(int max_entries,
-						   RIDKeyPair<T1> ridKeyPair,
 						   T2* existingLeafNode,
 						   PageId& newLeafPageId,
-						   T1& newKey);
+						   T1& newKey,
+						   RIDKeyPair<T1> ridKeyPair);
 
 		/**
 		 * Splits a non leaf node, redistributes entries and updates book keeping information
@@ -583,9 +583,9 @@ at this level are just above the leaf nodes. Otherwise set to 0.
 		void splitNonLeafNode(int indexToInsert,
 							  int max_entries,
 							  T2* nonLeafNode,
-							  PageId& newPageId,
 							  T1& newKeyToParent,
 							  T1& newKeyFromChild,
+							  PageId& newPageId,
 							  PageId newChildPageId);
 
 		/**
