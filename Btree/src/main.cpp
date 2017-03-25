@@ -19,6 +19,7 @@
 #include "exceptions/bad_opcodes_exception.h"
 #include "exceptions/scan_not_initialized_exception.h"
 #include "exceptions/end_of_file_exception.h"
+#include "exceptions/invalid_record_exception.h"
 
 #define checkPassFail(a, b) 																				\
 {																																		\
@@ -41,9 +42,11 @@ using namespace badgerdb;
 // -----------------------------------------------------------------------------
 int testNum = 1;
 const std::string relationName = "relA";
+std::string newRelationName = "newrelation";
 //If the relation size is changed then the second parameter 2 chechPassFail may need to be changed to number of record that are expected to be found during the scan, else tests will erroneously be reported to have failed.
 const int	relationSize = 5000;
 std::string intIndexName, doubleIndexName, stringIndexName;
+std::string newIntIndexName, newDoubleIndexName, newStringIndexName;
 
 // This is the structure for tuples in the base relation
 
@@ -68,19 +71,26 @@ void createRelationForward();
 void createRelationBackward();
 void createRelationRandom();
 void createRelationHuge();
+void createEmptyRelation();
 void intTests();
+void emptyIntTests();
 int intScan(BTreeIndex *index, int lowVal, Operator lowOp, int highVal, Operator highOp);
 void indexTests();
+void emptyIndexTests();
 void doubleTests();
+void emptyDoubleTests();
 int doubleScan(BTreeIndex *index, double lowVal, Operator lowOp, double highVal, Operator highOp);
 void stringTests();
+void emptyStringTests();
 int stringScan(BTreeIndex *index, int lowVal, Operator lowOp, int highVal, Operator highOp);
 void test1();
 void test2();
 void test3();
 void test4();
+void test5();
 void errorTests();
 void deleteRelation();
+void deleteEmptyRelation();
 
 int main(int argc, char **argv)
 {
@@ -170,6 +180,7 @@ int main(int argc, char **argv)
 	test2();
 	test3();
 	test4();
+	//test5();
 	errorTests();
 
 	delete bufMgr;
@@ -216,6 +227,15 @@ void test4() {
 	createRelationHuge();
 	indexTests();
 	deleteRelation();
+}
+
+void test5() {
+	std::cout << "--------------------" << std::endl;
+	std::cout << "createEmptyRelation" << std::endl;
+
+	createEmptyRelation();
+	emptyIndexTests();
+	deleteEmptyRelation();
 }
 
 // -----------------------------------------------------------------------------
@@ -427,6 +447,28 @@ void createRelationHuge()
 	file1->writePage(new_page_number, new_page);
 }
 
+void createEmptyRelation()
+{
+	std::vector<RecordId> ridVec;
+
+	// destroy any old copies of relation file
+	try
+	{
+		File::remove(newRelationName);
+	}
+	catch(FileNotFoundException e)
+	{
+	}
+
+	file1 = new PageFile(newRelationName, true);
+
+	// initialize all of record1.s to keep purify happy
+	//memset(record1.s, ' ', sizeof(record1.s));
+	PageId new_page_number;
+	Page new_page = file1->allocatePage(new_page_number);
+	file1->writePage(new_page_number, new_page);
+}
+
 // -----------------------------------------------------------------------------
 // indexTests
 // -----------------------------------------------------------------------------
@@ -468,6 +510,43 @@ void indexTests()
 	}
 }
 
+void emptyIndexTests()
+{
+	if(testNum == 1)
+	{
+		emptyIntTests();
+		try
+		{
+			File::remove(newIntIndexName);
+		}
+		catch(FileNotFoundException e)
+		{
+		}
+	}
+	else if(testNum == 2)
+	{
+		emptyDoubleTests();
+		try
+		{
+			File::remove(newDoubleIndexName);
+		}
+		catch(FileNotFoundException e)
+		{
+		}
+	}
+	else if(testNum == 3)
+	{
+		emptyStringTests();
+		try
+		{
+			File::remove(newStringIndexName);
+		}
+		catch(FileNotFoundException e)
+		{
+		}
+	}
+}
+
 // -----------------------------------------------------------------------------
 // intTests
 // -----------------------------------------------------------------------------
@@ -487,6 +566,17 @@ void intTests()
 	checkPassFail(intScan(&index,3000,GTE,4000,LT), 1000)
 }
 
+void emptyIntTests()
+{
+	std::cout << "Create a B+ Tree index on the integer field" << std::endl;
+	BTreeIndex index(newRelationName, newIntIndexName, bufMgr, offsetof(tuple,i), INTEGER);
+
+	// run some tests
+	checkPassFail(intScan(&index,25,GT,40,LT), 0)
+	checkPassFail(intScan(&index,0,GT,1,LT), 0)
+	checkPassFail(intScan(&index,300,GT,400,LT), 0)
+}
+
 int intScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operator highOp)
 {
 	RecordId scanRid;
@@ -498,6 +588,7 @@ int intScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operato
 	if( highOp == LT ) { std::cout << ")"; } else { std::cout << "]"; }
 	std::cout << std::endl;
 
+
 	int numResults = 0;
 
 	try
@@ -508,6 +599,70 @@ int intScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operato
 	{
 		std::cout << "No Key Found satisfying the scan criteria." << std::endl;
 		return 0;
+	}
+
+	while(1)
+	{
+		try
+		{
+			index->scanNext(scanRid);
+			bufMgr->readPage(file1, scanRid.page_number, curPage);
+			RECORD myRec = *(reinterpret_cast<const RECORD*>(curPage->getRecord(scanRid).data()));
+			bufMgr->unPinPage(file1, scanRid.page_number, false);
+
+			if( numResults < 5 )
+			{
+				std::cout << "at:" << scanRid.page_number << "," << scanRid.slot_number;
+				std::cout << " -->:" << myRec.i << ":" << myRec.d << ":" << myRec.s << ":" <<std::endl;
+			}
+			else if( numResults == 5 )
+			{
+				std::cout << "..." << std::endl;
+			}
+		}
+		catch(IndexScanCompletedException e)
+		{
+			break;
+		}
+
+		numResults++;
+	}
+
+	if( numResults >= 5 )
+	{
+		std::cout << "Number of results: " << numResults << std::endl;
+	}
+	index->endScan();
+	std::cout << std::endl;
+
+	return numResults;
+}
+
+int emptyIntScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operator highOp)
+{
+	RecordId scanRid;
+	Page *curPage;
+
+	std::cout << "Scan for ";
+	if( lowOp == GT ) { std::cout << "("; } else { std::cout << "["; }
+	std::cout << lowVal << "," << highVal;
+	if( highOp == LT ) { std::cout << ")"; } else { std::cout << "]"; }
+	std::cout << std::endl;
+
+
+	int numResults = 0;
+
+	try
+	{
+		index->startScan(&lowVal, lowOp, &highVal, highOp);
+	}
+	catch(NoSuchKeyFoundException e)
+	{
+		std::cout << "No Key Found satisfying the scan criteria." << std::endl;
+		return 0;
+	}
+	catch(InvalidRecordException i) {
+		std::cout << "Test passed!";
 	}
 
 	while(1)
@@ -565,6 +720,18 @@ void doubleTests()
 	checkPassFail(doubleScan(&index,300,GT,400,LT), 99)
 	checkPassFail(doubleScan(&index,3000,GTE,4000,LT), 1000)
 }
+
+void emptyDoubleTests()
+{
+	std::cout << "Create a B+ Tree index on the double field" << std::endl;
+	BTreeIndex index(newRelationName, newDoubleIndexName, bufMgr, offsetof(tuple,d), DOUBLE);
+
+	// run some tests
+	checkPassFail(doubleScan(&index,25,GT,40,LT), 0)
+	checkPassFail(intScan(&index,996,GT,1001,LT), 0)
+	checkPassFail(intScan(&index,0,GT,1,LT), 0)
+}
+
 
 int doubleScan(BTreeIndex * index, double lowVal, Operator lowOp, double highVal, Operator highOp)
 {
@@ -645,7 +812,18 @@ void stringTests()
 	checkPassFail(stringScan(&index,3000,GTE,4000,LT), 1000)
 }
 
-int stringScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operator highOp)
+void emptyStringTests() {
+	std::cout << "Create a B+ Tree index on the string field" << std::endl;
+
+	BTreeIndex index(newRelationName, newStringIndexName, bufMgr, offsetof(tuple, s), STRING);
+
+	// run some tests
+	checkPassFail(stringScan(&index, 25, GT, 40, LT), 0)
+	checkPassFail(stringScan(&index,0,GT,1,LT), 0)
+	checkPassFail(stringScan(&index,3000,GTE,4000,LT), 0)
+}
+
+	int stringScan(BTreeIndex * index, int lowVal, Operator lowOp, int highVal, Operator highOp)
 {
 	RecordId scanRid;
 	Page *curPage;
@@ -837,6 +1015,23 @@ void deleteRelation()
 	try
 	{
 		File::remove(relationName);
+	}
+	catch(FileNotFoundException e)
+	{
+	}
+}
+
+void deleteEmptyRelation()
+{
+	if(file1)
+	{
+		bufMgr->flushFile(file1);
+		delete file1;
+		file1 = NULL;
+	}
+	try
+	{
+		File::remove(newRelationName);
 	}
 	catch(FileNotFoundException e)
 	{
