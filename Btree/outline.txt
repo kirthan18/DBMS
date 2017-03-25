@@ -1,0 +1,7 @@
+Test cases:
+The test cases are included in main.cpp. The new test cases are numbered sequentially following the existing test cases, i.e. test4(), test5(), etc.
+
+Design Report:
+The design report is a PDF file named "Btree - Design Report.pdf". The file is located in the Btree directory of the submission.
+
+
