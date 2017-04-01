@@ -79,21 +79,21 @@ void CreateTable_Company(sqlite3 *db) {
 }
 
 void CreateTable_Food_Des(sqlite3 *db) {
-    const char *query = "CREATE TABLE FOOD_DES(              " \
-                        "NDB_No         CHAR(5)     NOT NULL," \
-                        "FdGrp_Cd       CHAR(4)     NOT NULL," \
-                        "Long_Desc      CHAR(200)   NOT NULL," \
-                        "Shrt_Desc      CHAR(60)    NOT NULL," \
-                        "ComName        CHAR(100)           ," \
-                        "ManufacName    CHAR(65)            ," \
-                        "Survey         CHAR(1)             ," \
-                        "Ref_desc       CHAR(135)           ," \
-                        "Refuse         REAL                ," \
-                        "SciName        CHAR(65)            ," \
-                        "N_Factor       REAL                ," \
-                        "Pro_Factor     REAL                ," \
-                        "Fat_Factor     REAL                ," \
-                        "CHO_Factor     REAL                 " \
+    const char *query = "CREATE TABLE FOOD_DES(                          " \
+                        "NDB_No            CHAR(5)     PRIMARY KEY  NOT NULL," \
+                        "FdGrp_Cd          CHAR(4)                  NOT NULL," \
+                        "Long_Desc         CHAR(200)                NOT NULL," \
+                        "Shrt_Desc         CHAR(60)                 NOT NULL," \
+                        "ComName           CHAR(100)                        ," \
+                        "ManufacName       CHAR(65)                         ," \
+                        "Survey            CHAR(1)                          ," \
+                        "Ref_desc          CHAR(135)                        ," \
+                        "Refuse            REAL                             ," \
+                        "SciName           CHAR(65)                         ," \
+                        "N_Factor          REAL                             ," \
+                        "Pro_Factor        REAL                             ," \
+                        "Fat_Factor        REAL                             ," \
+                        "CHO_Factor        REAL                              " \
                         ");";
     CreateTable(db, query, "FOOD_DES");
 }
@@ -117,7 +117,8 @@ void CreateTable_Nut_Data(sqlite3 *db) {
                         "Up_EB          REAL                ," \
                         "Stat_cmt       CHAR(10)            ," \
                         "AddMod_Date    CHAR(10)            ," \
-                        "CC             CHAR(1)             " \
+                        "CC             CHAR(1)             ," \
+                        "PRIMARY KEY (NDB_No, Nutr_No)       "\
                         ");";
     CreateTable(db, query, "NUT_DATA");
 }
@@ -149,6 +150,87 @@ void CreateTable_Footnote(sqlite3 *db) {
 }
 
 
+void CreateTable_Fd_Group(sqlite3 *db) {
+    const char *query = "CREATE TABLE FD_GROUP("  \
+                        "FdGrp_Cd       CHAR(4)     PRIMARY KEY     NOT NULL," \
+                        "FdGrp_Desc     CHAR(60)                    NOT NULL " \
+                        ");";
+    CreateTable(db, query, "FD_GROUP");
+}
+
+void CreateTable_Langual(sqlite3 *db) {
+    const char *query = "CREATE TABLE LANGUAL("  \
+                        "NDB_No         CHAR(5)    NOT NULL," \
+                        "Factor_Code    CHAR(5)    NOT NULL," \
+                        "PRIMARY KEY (NDB_No, Factor_Code)  " \
+                        ");";
+    CreateTable(db, query, "LANGUAL");
+}
+
+void CreateTable_Lang_Desc(sqlite3 *db) {
+    const char *query = "CREATE TABLE LANGDESC ("  \
+                        "Factor_Code    CHAR(5)    PRIMARY KEY  NOT NULL," \
+                        "Description    CHAR(140)               NOT NULL " \
+                        ");";
+    CreateTable(db, query, "LANGDESC");
+}
+
+void CreateTable_Nutr_Def(sqlite3 *db) {
+    const char *query = "CREATE TABLE NUTR_DEF ("  \
+                        "Nutr_No        CHAR(3)    PRIMARY KEY  NOT NULL," \
+                        "Units          CHAR(7)                 NOT NULL," \
+                        "Tagname        CHAR(20)                        ," \
+                        "NutrDesc       CHAR(60)                NOT NULL," \
+                        "Num_Dec        CHAR(1)                 NOT NULL," \
+                        "SR_Order       REAL                    NOT NULL " \
+                        ");";
+    CreateTable(db, query, "NUTR_DEF");
+}
+
+
+void CreateTable_Src_Cd(sqlite3 *db) {
+    const char *query = "CREATE TABLE SRC_CD ("  \
+                        "Src_Cd         CHAR(2)    PRIMARY KEY  NOT NULL," \
+                        "SrcCd_Desc     CHAR(60)                NOT NULL " \
+                        ");";
+    CreateTable(db, query, "SRC_CD");
+}
+
+void CreateTable_Deriv_Cd(sqlite3 *db) {
+    const char *query = "CREATE TABLE DERIV_CD ("  \
+                        "Deriv_Cd       CHAR(4)    PRIMARY KEY  NOT NULL," \
+                        "Deriv_Desc     CHAR(120)               NOT NULL " \
+                        ");";
+    CreateTable(db, query, "DERIV_CD");
+}
+
+void CreateTable_Data_Src_Ln(sqlite3 *db) {
+    const char *query = "CREATE TABLE  DATSRCLN("  \
+                        "NDB_No         CHAR(5)     NOT NULL," \
+                        "Nutr_No        CHAR(3)     NOT NULL," \
+                        "DataSrc_ID     CHAR(6)     NOT NULL," \
+                        "PRIMARY KEY (NDB_No, Nutr_No, Datasrc_ID) " \
+                        ");";
+    CreateTable(db, query, " DATSRCLN");
+}
+
+
+void CreateTable_Data_Src(sqlite3 *db) {
+    const char *query = "CREATE TABLE  DATA_SRC("  \
+                        "DataSrc_ID     CHAR(6)     PRIMARY KEY     NOT NULL," \
+                        "Authors        CHAR(255)                           ," \
+                        "Title          CHAR(255)                   NOT NULL," \
+                        "Year           CHAR(4)                             ," \
+                        "Journal        CHAR(135)                           ," \
+                        "Vol_City       CHAR(16)                            ," \
+                        "Issue_State    CHAR(5)                             ," \
+                        "Start_Page     CHAR(5)                             ," \
+                        "End_Page       CHAR(5)                              " \
+                        ");";
+    CreateTable(db, query, " DATA_SRC");
+}
+
+
 void CreateAllTables(sqlite3 *db) {
     CreateTable_Company(db);
 
@@ -159,14 +241,14 @@ void CreateAllTables(sqlite3 *db) {
     CreateTable_Footnote(db);
 
     // Support files
-    /*CreateTable_Fd_Group(db);
+    CreateTable_Fd_Group(db);
     CreateTable_Langual(db);
     CreateTable_Lang_Desc(db);
     CreateTable_Nutr_Def(db);
     CreateTable_Src_Cd(db);
     CreateTable_Deriv_Cd(db);
     CreateTable_Data_Src_Ln(db);
-    CreateTable_Data_Src(db);*/
+    CreateTable_Data_Src(db);
 }
 
 
