@@ -1,5 +1,9 @@
 #include <iostream>
 #include <sqlite3.h>
+#include <fstream>
+#include <sstream>
+#include <vector>
+
 using namespace std;
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
@@ -251,11 +255,167 @@ void CreateAllTables(sqlite3 *db) {
     CreateTable_Data_Src(db);
 }
 
+void InsertRecord(sqlite3 *db, string query) {
+    char *errorMessage;
+    int rc = sqlite3_exec(db, query.c_str(), callback, 0, &errorMessage);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL error: %s\n", errorMessage);
+        sqlite3_free(errorMessage);
+        exit(1);
+    }else{
+        fprintf(stdout, "Record inserted successfully\n");
+    }
+}
+void Parse_Data_Src(sqlite3 *db) {
+    ifstream infile("sr28asc/DATA_SRC.txt");
+
+    /*string line;
+    getline(infile, line);
+    cout << line << endl;
+    stringstream test("~D6401~^~M. Ozcan~^~Determination of the mineral compositions of some selected oil-bearing seeds & kernels using Inductively Coupled Plasma Atomic Emmission Spectrometry (ICP-AES)~^~2006~^~Grasas y Aceites~^~57~^~2~^^");
+    string segment;
+    vector<string> seglist;
+
+    while(getline(test, segment, '^'))
+    {
+        seglist.push_back(segment);
+        cout << segment << endl;
+
+        if (segment == "") {
+            cout << "NULL" << endl;
+        }
+    }
+
+    cout << seglist.size() << endl;
+
+    if (seglist.size() == 8) {
+        seglist.push_back("");
+    }
+    string query = "INSERT INTO DATA_SRC (DataSrc_ID ,Authors, Title, Year, Journal, Vol_City, Issue_State, "
+            "Start_Page, End_Page) VALUES (";
+
+    char delim[3] = "~\r";
+    for (int i = 0; i < seglist.size(); i++) {
+        if (seglist[i] == "" || seglist[i] == "~~") {
+            query = query + "NULL";
+        } else {
+            bool isString = seglist[i].substr(0,1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if(isString) {
+                query = query + "'" + seglist[i] + "'";
+            }
+
+        }
+        if (i != seglist.size() - 1) {
+            query = query + ",";
+        } else {
+            query = query + ");";
+        }
+    }
+
+    cout << query << endl;
+
+    InsertRecord(db, query);*/
+
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while(getline(stream, segment, '^'))
+        {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+
+        if (seglist.size() == 8) {
+            seglist.push_back("");
+        }
+        string query = "INSERT INTO DATA_SRC (DataSrc_ID ,Authors, Title, Year, Journal, Vol_City, Issue_State, "
+                "Start_Page, End_Page) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+            if (seglist[i] == "" || seglist[i] == "~~" || seglist[i] == "\r") {
+                query = query + "NULL";
+            } else {
+                bool isString = seglist[i].substr(0,1) == "~";
+                for (int j = 0; j < 2; j++) {
+                    seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+                }
+                if(isString) {
+                    char *safeString = sqlite3_mprintf("%q",seglist[i].c_str());
+                    query = query + "'" + safeString + "'";
+                }
+
+            }
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        cout << query << endl;
+        InsertRecord(db, query);
+    }
+}
+
+void Parse_Src_Cd(sqlite3 *db) {
+    ifstream infile("sr28asc/SRC_CD.txt");
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+        string query = "INSERT INTO SRC_CD (Src_Cd ,SrcCd_Desc) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+
+            bool isString = seglist[i].substr(0, 1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                query = query + "'" + safeString + "'";
+            }
+
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        cout << query << endl;
+        InsertRecord(db, query);
+    }
+}
+
+void ParseAllFiles(sqlite3 *db) {
+    Parse_Data_Src(db);
+    Parse_Src_Cd(db);
+
+}
+
 
 int main() {
 
     sqlite3 *nutrient_db;
-    char *errorMessage = 0;
     int rc;
     const char* data = "Callback function called";
 
@@ -270,45 +430,11 @@ int main() {
     DropAllTables(nutrient_db);
     CreateAllTables(nutrient_db);
 
-    /* Create SQL statement */
-    const char *query = "CREATE TABLE COMPANY("  \
-         "ID INT PRIMARY KEY     NOT NULL," \
-         "NAME           TEXT    NOT NULL," \
-         "AGE            INT     NOT NULL," \
-         "ADDRESS        CHAR(50)," \
-         "SALARY         REAL );";
-
-    /* Execute SQL statement */
-    rc = sqlite3_exec(nutrient_db, query, callback, 0, &errorMessage);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", errorMessage);
-        sqlite3_free(errorMessage);
-    } else {
-        fprintf(stdout, "Table created successfully\n");
-    }
-
-    const char *sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-         "VALUES (1, 'Paul', 32, 'California', 20000.00 ); " \
-         "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-         "VALUES (2, 'Allen', 25, 'Texas', 15000.00 ); "     \
-         "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
-         "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );" \
-         "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
-         "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";
-
-    /* Execute SQL statement */
-    rc = sqlite3_exec(nutrient_db, sql, callback, 0, &errorMessage);
-    if( rc != SQLITE_OK ){
-        fprintf(stderr, "SQL error: %s\n", errorMessage);
-        sqlite3_free(errorMessage);
-    }else{
-        fprintf(stdout, "Records created successfully\n");
-    }
-
-    /* Create SQL statement */
+    ParseAllFiles(nutrient_db);
+    /* Create SQL statement *//*
     sql = "SELECT * from COMPANY";
 
-    /* Execute SQL statement */
+    *//* Execute SQL statement *//*
     rc = sqlite3_exec(nutrient_db, sql, callback, (void*)data, &errorMessage);
     if( rc != SQLITE_OK ){
         fprintf(stderr, "SQL error: %s\n", errorMessage);
@@ -316,7 +442,7 @@ int main() {
     }else{
         fprintf(stdout, "Operation done successfully\n");
     }
-
+*/
     sqlite3_close(nutrient_db);
 
     return 0;
