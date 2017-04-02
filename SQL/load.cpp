@@ -27,21 +27,22 @@ void DropTable(const char *tableName, sqlite3 *db) {
 
     strcat(dropTableQuery, tableName);
 
-    cout << endl << "Deleting table : " << tableName << endl;
-    cout << "Query: " << dropTableQuery << endl;
+//    cout << endl << "Deleting table : " << tableName << endl;
+//    cout << "Query: " << dropTableQuery << endl;
 
     int rc = sqlite3_exec(db, dropTableQuery, NULL, 0, &errorMessage);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", errorMessage);
         sqlite3_free(errorMessage);
     } else {
-        fprintf(stdout, "Table dropped successfully\n");
+//        fprintf(stdout, "Table dropped successfully\n");
+        cout << "Table " << tableName << " dropped successfully." << endl;
     }
 
 }
 
 void DropAllTables(sqlite3 *nutrient_db) {
-    DropTable("COMPANY", nutrient_db);
+    cout << "**********************************************" << endl;
     DropTable("DATA_SRC", nutrient_db);
     DropTable("DATSRCLN", nutrient_db);
     DropTable("DERIV_CD", nutrient_db);
@@ -54,11 +55,12 @@ void DropAllTables(sqlite3 *nutrient_db) {
     DropTable("NUTR_DEF", nutrient_db);
     DropTable("SRC_CD", nutrient_db);
     DropTable("WEIGHT", nutrient_db);
+    cout << "**********************************************" << endl;
 }
 
 void CreateTable(sqlite3 *db, const char *query, const char* tableName) {
     char *errorMessage;
-    cout << endl << "Creating table : " << tableName << endl;
+//    cout << endl << "Creating table : " << tableName << endl;
 
     /* Execute SQL statement */
     int rc = sqlite3_exec(db, query, callback, 0, &errorMessage);
@@ -69,17 +71,6 @@ void CreateTable(sqlite3 *db, const char *query, const char* tableName) {
         //fprintf(stdout, "Table created successfully\n");
         cout << "Table " << tableName << " created successfully." << endl;
     }
-}
-
-void CreateTable_Company(sqlite3 *db) {
-    /* Create SQL statement */
-    const char *query = "CREATE TABLE COMPANY("  \
-         "ID INT PRIMARY KEY        NOT NULL," \
-         "NAME           TEXT    NOT NULL," \
-         "AGE            INT     NOT NULL," \
-         "ADDRESS        CHAR(50)        ," \
-         "SALARY         REAL             );";
-    CreateTable(db, query, "COMPANY");
 }
 
 void CreateTable_Food_Des(sqlite3 *db) {
@@ -236,8 +227,7 @@ void CreateTable_Data_Src(sqlite3 *db) {
 
 
 void CreateAllTables(sqlite3 *db) {
-    CreateTable_Company(db);
-
+    cout << "**********************************************" << endl;
     // Principal Files
     CreateTable_Food_Des(db);
     CreateTable_Nut_Data(db);
@@ -253,6 +243,7 @@ void CreateAllTables(sqlite3 *db) {
     CreateTable_Deriv_Cd(db);
     CreateTable_Data_Src_Ln(db);
     CreateTable_Data_Src(db);
+    cout << "**********************************************" << endl;
 }
 
 void InsertRecord(sqlite3 *db, string query) {
@@ -267,7 +258,7 @@ void InsertRecord(sqlite3 *db, string query) {
     }
 }
 
-string CreateQuery(string query, vector<string> fieldValues) {
+string AppendFieldValues(string query, vector<string> fieldValues) {
     char delim[3] = "~\r";
 
     for (int i = 0; i < fieldValues.size(); i++) {
@@ -285,8 +276,6 @@ string CreateQuery(string query, vector<string> fieldValues) {
             } else {
                 query = query + fieldValues[i];
             }
-
-
         }
         if (i != fieldValues.size() - 1) {
             query = query + ",";
@@ -298,23 +287,27 @@ string CreateQuery(string query, vector<string> fieldValues) {
     return query;
 }
 
+vector<string> GetFieldValues(string line) {
+    stringstream stream(line);
+    string segment;
+    vector<string> fieldValueList;
+
+    while(getline(stream, segment, '^'))
+    {
+        fieldValueList.push_back(segment);
+        //cout << segment << endl;
+    }
+    return fieldValueList;
+}
+
 void Parse_Food_Des(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/FOOD_DES.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing FOOD_DES.txt" << endl;
 
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while(getline(stream, segment, '^'))
-        {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-//        cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
 
         if (seglist.size() == 13) {
             seglist.push_back("");
@@ -322,32 +315,23 @@ void Parse_Food_Des(sqlite3 *db) {
         string query = "INSERT INTO FOOD_DES (NDB_No ,FdGrp_Cd, Long_Desc, Shrt_Desc, ComName, ManufacName, Survey, "
                 "Ref_desc, Refuse, SciName, N_Factor, Pro_Factor, Fat_Factor, CHO_Factor) VALUES (";
 
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Nut_Data(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/NUT_DATA.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing NUT_DATA.txt" << endl;
 
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while(getline(stream, segment, '^'))
-        {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-//        cout << seglist.size() << endl;
-
+        vector<string> seglist = GetFieldValues(line);
         if (seglist.size() < 18) {
             int k = 0;
             while (k < 18 - seglist.size()) {
@@ -355,82 +339,60 @@ void Parse_Nut_Data(sqlite3 *db) {
                 k++;
             }
         }
-//        if (seglist.size() == 17) {
-//            seglist.push_back("");
-//        }
         string query = "INSERT INTO NUT_DATA (NDB_No, Nutr_No, Nutr_Val, Num_Data_Pts, Std_Error, Src_Cd, Deriv_Cd, "
                 "Ref_NDB_No, Add_Nutr_Mark, Num_Studies, Min, Max, DF, Low_EB, Up_EB, Stat_cmt, AddMod_Date, CC) "
                 "VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Weight(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/WEIGHT.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing WEIGHT.txt" << endl;
 
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while(getline(stream, segment, '^'))
-        {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-//        cout << seglist.size() << endl;
-
+        vector<string> seglist = GetFieldValues(line);
         if (seglist.size() == 6) {
             seglist.push_back("");
         }
         string query = "INSERT INTO WEIGHT (NDB_No ,Seq, Amount, Msre_Desc, Gm_Wgt, Num_Data_Pts, Std_Dev) VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Footnote(sqlite3 *db) {
 
     ifstream infile("sr28asc/FOOTNOTE.txt");
     int numRecords = 0;
+    cout << "**********************************************" << endl;
+    cout << "Parsing FOOTNOTE.txt" << endl;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
-
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO FOOTNOTE (NDB_No, Footnt_No, Footnt_Typ, Nutr_No, Footnt_Txt) VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Data_Src(sqlite3 *db) {
     ifstream infile("sr28asc/DATA_SRC.txt");
-
+    int numRecords = 0;
     /*string line;
     getline(infile, line);
     cout << line << endl;
@@ -480,221 +442,159 @@ void Parse_Data_Src(sqlite3 *db) {
     cout << query << endl;
 
     InsertRecord(db, query);*/
-
+    cout << "**********************************************" << endl;
+    cout << "Parsing DATA_SRC.txt" << endl;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while(getline(stream, segment, '^'))
-        {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
 
         if (seglist.size() == 8) {
             seglist.push_back("");
         }
         string query = "INSERT INTO DATA_SRC (DataSrc_ID ,Authors, Title, Year, Journal, Vol_City, Issue_State, "
                 "Start_Page, End_Page) VALUES (";
-
-        query = CreateQuery(query, seglist);
-        cout << query << endl;
+        query = AppendFieldValues(query, seglist);
+//        cout << query << endl;
         InsertRecord(db, query);
+        numRecords++;
     }
+    cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Data_Src_Ln(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/DATSRCLN.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing DATSRCLN.txt" << endl;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO DATSRCLN (NDB_No ,Nutr_No, DataSrc_ID) VALUES (";
 
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         InsertRecord(db, query);
         numRecords++;
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Src_Cd(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/SRC_CD.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing SRC_CD.txt" << endl;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO SRC_CD (Src_Cd ,SrcCd_Desc) VALUES (";
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         InsertRecord(db, query);
         numRecords++;
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Deriv_Cd(sqlite3 *db) {
     int numRecords = 0;
+    cout << "**********************************************" << endl;
+    cout << "Parsing DERIV_CD.txt" << endl;
     ifstream infile("sr28asc/DERIV_CD.txt");
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-//            cout << segment << endl;
-        }
-//        cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO DERIV_CD (Deriv_Cd ,Deriv_Desc) VALUES (";
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
 //        cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 
 void Parse_Fd_Group(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/FD_GROUP.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing FD_GROUP.txt" << endl;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO FD_GROUP (FdGrp_Cd ,FdGrp_Desc) VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         InsertRecord(db, query);
         numRecords++;
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Langual(sqlite3 *db) {
     int numRecords = 0;
     ifstream infile("sr28asc/LANGUAL.txt");
+    cout << "**********************************************" << endl;
+    cout << "Parsing LANGUAL.txt" << endl;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO LANGUAL (NDB_No ,Factor_Code) VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Lang_Desc(sqlite3 *db) {
+    cout << "**********************************************" << endl;
+    cout << "Parsing LANGDESC.txt" << endl;
     int numRecords = 0;
     ifstream infile("sr28asc/LANGDESC.txt");
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while (getline(stream, segment, '^')) {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO LANGDESC (Factor_Code ,Description) VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void Parse_Nutr_Def(sqlite3 *db) {
     ifstream infile("sr28asc/NUTR_DEF.txt");
+
+    cout << "**********************************************" << endl;
+    cout << "Parsing NUTR_DEF.txt" << endl;
     int numRecords = 0;
     for (string line; getline(infile, line);) {
-        //cout << line << endl;
-
-        stringstream stream(line);
-        string segment;
-        vector<string> seglist;
-
-        while(getline(stream, segment, '^'))
-        {
-            seglist.push_back(segment);
-            //cout << segment << endl;
-        }
-        //cout << seglist.size() << endl;
-
+        vector<string> seglist = GetFieldValues(line);
         string query = "INSERT INTO NUTR_DEF (Nutr_No ,Units, Tagname, NutrDesc, Num_Dec, SR_Order) VALUES (";
-
-        query = CreateQuery(query, seglist);
+        query = AppendFieldValues(query, seglist);
         //cout << query << endl;
         numRecords++;
         InsertRecord(db, query);
     }
     cout << "Number of records inserted : " << numRecords << endl;
+    cout << "**********************************************" << endl;
 }
 
 void ParseAllFiles(sqlite3 *db) {
-//    Parse_Food_Des(db);
+    Parse_Food_Des(db);
 //    Parse_Nut_Data(db);
-//    Parse_Weight(db);
-//    Parse_Footnote(db);
+    Parse_Weight(db);
+    Parse_Footnote(db);
 
-//    Parse_Data_Src(db);
-//    Parse_Src_Cd(db);
-//    Parse_Fd_Group(db);
-//    Parse_Langual(db);
-//    Parse_Lang_Desc(db);
-//    Parse_Nutr_Def(db);
-//    Parse_Deriv_Cd(db);
+    Parse_Data_Src(db);
+    Parse_Src_Cd(db);
+    Parse_Fd_Group(db);
+    Parse_Langual(db);
+    Parse_Lang_Desc(db);
+    Parse_Nutr_Def(db);
+    Parse_Deriv_Cd(db);
     Parse_Data_Src_Ln(db);
 }
 
