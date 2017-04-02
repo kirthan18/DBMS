@@ -147,7 +147,7 @@ void CreateTable_Footnote(sqlite3 *db) {
                         "NDB_No         CHAR(5)     NOT NULL," \
                         "Footnt_no      CHAR(4)     NOT NULL," \
                         "Footnt_Typ     CHAR(1)     NOT NULL," \
-                        "Nutr_No        CHAR(3)     NOT NULL," \
+                        "Nutr_No        CHAR(3)             ," \
                         "Footnt_Txt     CHAR(200)   NOT NULL" \
                         ");";
     CreateTable(db, query, "FOOTNOTE");
@@ -263,9 +263,235 @@ void InsertRecord(sqlite3 *db, string query) {
         sqlite3_free(errorMessage);
         exit(1);
     }else{
-        fprintf(stdout, "Record inserted successfully\n");
+        //printf(stdout, "Record inserted successfully\n");
     }
 }
+
+void Parse_Food_Des(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/FOOD_DES.txt");
+
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while(getline(stream, segment, '^'))
+        {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+//        cout << seglist.size() << endl;
+
+        if (seglist.size() == 13) {
+            seglist.push_back("");
+        }
+        string query = "INSERT INTO FOOD_DES (NDB_No ,FdGrp_Cd, Long_Desc, Shrt_Desc, ComName, ManufacName, Survey, "
+                "Ref_desc, Refuse, SciName, N_Factor, Pro_Factor, Fat_Factor, CHO_Factor) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+            if (seglist[i] == "" || seglist[i] == "~~" || seglist[i] == "\r") {
+                query = query + "NULL";
+            } else {
+                bool isString = seglist[i].substr(0,1) == "~";
+                for (int j = 0; j < 2; j++) {
+                    seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+                }
+                if(isString) {
+                    char *safeString = sqlite3_mprintf("%q",seglist[i].c_str());
+                    query = query + "'" + safeString + "'";
+                } else {
+                    query = query + seglist[i];
+                }
+
+
+            }
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+void Parse_Nut_Data(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/NUT_DATA.txt");
+
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while(getline(stream, segment, '^'))
+        {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+//        cout << seglist.size() << endl;
+
+        if (seglist.size() < 18) {
+            int k = 0;
+            while (k < 18 - seglist.size()) {
+                seglist.push_back("");
+                k++;
+            }
+        }
+//        if (seglist.size() == 17) {
+//            seglist.push_back("");
+//        }
+        string query = "INSERT INTO NUT_DATA (NDB_No, Nutr_No, Nutr_Val, Num_Data_Pts, Std_Error, Src_Cd, Deriv_Cd, "
+                "Ref_NDB_No, Add_Nutr_Mark, Num_Studies, Min, Max, DF, Low_EB, Up_EB, Stat_cmt, AddMod_Date, CC) "
+                "VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+            if (seglist[i] == "" || seglist[i] == "~~" || seglist[i] == "\r") {
+                query = query + "NULL";
+            } else {
+                bool isString = seglist[i].substr(0,1) == "~";
+                for (int j = 0; j < 2; j++) {
+                    seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+                }
+                if(isString) {
+                    char *safeString = sqlite3_mprintf("%q",seglist[i].c_str());
+                    query = query + "'" + safeString + "'";
+                } else {
+                    query = query + seglist[i];
+                }
+
+
+            }
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+void Parse_Weight(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/WEIGHT.txt");
+
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while(getline(stream, segment, '^'))
+        {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+//        cout << seglist.size() << endl;
+
+        if (seglist.size() == 6) {
+            seglist.push_back("");
+        }
+        string query = "INSERT INTO WEIGHT (NDB_No ,Seq, Amount, Msre_Desc, Gm_Wgt, Num_Data_Pts, Std_Dev) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+            if (seglist[i] == "" || seglist[i] == "~~" || seglist[i] == "\r") {
+                query = query + "NULL";
+            } else {
+                bool isString = seglist[i].substr(0,1) == "~";
+                for (int j = 0; j < 2; j++) {
+                    seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+                }
+                if(isString) {
+                    char *safeString = sqlite3_mprintf("%q",seglist[i].c_str());
+                    query = query + "'" + safeString + "'";
+                } else {
+                    query = query + seglist[i];
+                }
+
+
+            }
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+void Parse_Footnote(sqlite3 *db) {
+
+    ifstream infile("sr28asc/FOOTNOTE.txt");
+    int numRecords = 0;
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+
+        string query = "INSERT INTO FOOTNOTE (NDB_No, Footnt_No, Footnt_Typ, Nutr_No, Footnt_Txt) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+            if (seglist[i] == "" || seglist[i] == "~~") {
+                query = query + "NULL";
+            } else {
+                bool isString = seglist[i].substr(0, 1) == "~";
+                for (int j = 0; j < 2; j++) {
+                    seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+                }
+                if (isString) {
+                    char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                    query = query + "'" + safeString + "'";
+                } else {
+                    query = query + seglist[i];
+                }
+
+            }
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
 void Parse_Data_Src(sqlite3 *db) {
     ifstream infile("sr28asc/DATA_SRC.txt");
 
@@ -366,7 +592,51 @@ void Parse_Data_Src(sqlite3 *db) {
     }
 }
 
+void Parse_Data_Src_Ln(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/DATSRCLN.txt");
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+        string query = "INSERT INTO DATSRCLN (NDB_No ,Nutr_No, DataSrc_ID) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+
+            bool isString = seglist[i].substr(0, 1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                query = query + "'" + safeString + "'";
+            }
+
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        InsertRecord(db, query);
+        numRecords++;
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
 void Parse_Src_Cd(sqlite3 *db) {
+    int numRecords = 0;
     ifstream infile("sr28asc/SRC_CD.txt");
     for (string line; getline(infile, line);) {
         //cout << line << endl;
@@ -401,15 +671,250 @@ void Parse_Src_Cd(sqlite3 *db) {
                 query = query + ");";
             }
         }
+        //cout << query << endl;
+        InsertRecord(db, query);
+        numRecords++;
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+void Parse_Deriv_Cd(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/DERIV_CD.txt");
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+        string query = "INSERT INTO DERIV_CD (Deriv_Cd ,Deriv_Desc) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+
+            bool isString = seglist[i].substr(0, 1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                query = query + "'" + safeString + "'";
+            }
+
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+
+void Parse_Fd_Group(sqlite3 *db) {
+    ifstream infile("sr28asc/FD_GROUP.txt");
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+        string query = "INSERT INTO FD_GROUP (FdGrp_Cd ,FdGrp_Desc) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+
+            bool isString = seglist[i].substr(0, 1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                query = query + "'" + safeString + "'";
+            }
+
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
         cout << query << endl;
         InsertRecord(db, query);
     }
 }
 
+void Parse_Langual(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/LANGUAL.txt");
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+        string query = "INSERT INTO LANGUAL (NDB_No ,Factor_Code) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+
+            bool isString = seglist[i].substr(0, 1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                query = query + "'" + safeString + "'";
+            }
+
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+void Parse_Lang_Desc(sqlite3 *db) {
+    int numRecords = 0;
+    ifstream infile("sr28asc/LANGDESC.txt");
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while (getline(stream, segment, '^')) {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+        string query = "INSERT INTO LANGDESC (Factor_Code ,Description) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+
+            bool isString = seglist[i].substr(0, 1) == "~";
+            for (int j = 0; j < 2; j++) {
+                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+            }
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", seglist[i].c_str());
+                query = query + "'" + safeString + "'";
+            }
+
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
+void Parse_Nutr_Def(sqlite3 *db) {
+    ifstream infile("sr28asc/NUTR_DEF.txt");
+    int numRecords = 0;
+    for (string line; getline(infile, line);) {
+        //cout << line << endl;
+
+        stringstream stream(line);
+        string segment;
+        vector<string> seglist;
+
+        while(getline(stream, segment, '^'))
+        {
+            seglist.push_back(segment);
+            //cout << segment << endl;
+        }
+        //cout << seglist.size() << endl;
+
+        /*if (seglist.size() == 8) {
+            seglist.push_back("");
+        }*/
+        string query = "INSERT INTO NUTR_DEF (Nutr_No ,Units, Tagname, NutrDesc, Num_Dec, SR_Order) VALUES (";
+
+        char delim[3] = "~\r";
+
+        for (int i = 0; i < seglist.size(); i++) {
+            if (seglist[i] == "" || seglist[i] == "~~") {
+                query = query + "NULL";
+            } else {
+                bool isString = seglist[i].substr(0,1) == "~";
+                for (int j = 0; j < 2; j++) {
+                    seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
+                }
+                if(isString) {
+                    char *safeString = sqlite3_mprintf("%q",seglist[i].c_str());
+                    query = query + "'" + safeString + "'";
+                } else {
+                    query = query + seglist[i];
+                }
+
+            }
+            if (i != seglist.size() - 1) {
+                query = query + ",";
+            } else {
+                query = query + ");";
+            }
+        }
+        //cout << query << endl;
+        numRecords++;
+        InsertRecord(db, query);
+    }
+    cout << "Number of records inserted : " << numRecords << endl;
+}
+
 void ParseAllFiles(sqlite3 *db) {
+    Parse_Food_Des(db);
+    Parse_Nut_Data(db);
+    Parse_Weight(db);
+    Parse_Footnote(db);
+
     Parse_Data_Src(db);
     Parse_Src_Cd(db);
-
+    Parse_Fd_Group(db);
+    Parse_Langual(db);
+    Parse_Lang_Desc(db);
+    Parse_Nutr_Def(db);
+    Parse_Deriv_Cd(db);
+    Parse_Data_Src_Ln(db);
 }
 
 
