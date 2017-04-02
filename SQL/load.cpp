@@ -6,21 +6,6 @@
 
 using namespace std;
 
-static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
-    int i;
-    for (i = 0; i < argc; i++) {
-
-        cout << azColName[i] << " = ";
-        if (argv[i]) {
-            cout << argv[i] << "\n";
-        } else {
-            cout << "NULL\n";
-        }
-    }
-    printf("\n");
-    return 0;
-}
-
 void DropTable(const char *tableName, sqlite3 *db) {
     char *errorMessage;
     char dropTableQuery[100] = "DROP TABLE IF EXISTS ";
@@ -63,7 +48,7 @@ void CreateTable(sqlite3 *db, const char *query, const char* tableName) {
 //    cout << endl << "Creating table : " << tableName << endl;
 
     /* Execute SQL statement */
-    int rc = sqlite3_exec(db, query, callback, 0, &errorMessage);
+    int rc = sqlite3_exec(db, query, NULL, 0, &errorMessage);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", errorMessage);
         sqlite3_free(errorMessage);
@@ -248,7 +233,7 @@ void CreateAllTables(sqlite3 *db) {
 
 void InsertRecord(sqlite3 *db, string query) {
     char *errorMessage;
-    int rc = sqlite3_exec(db, query.c_str(), callback, 0, &errorMessage);
+    int rc = sqlite3_exec(db, query.c_str(), NULL, 0, &errorMessage);
     if( rc != SQLITE_OK ){
         fprintf(stderr, "SQL error: %s\n", errorMessage);
         sqlite3_free(errorMessage);
@@ -584,7 +569,7 @@ void Parse_Nutr_Def(sqlite3 *db) {
 
 void ParseAllFiles(sqlite3 *db) {
     Parse_Food_Des(db);
-//    Parse_Nut_Data(db);
+    Parse_Nut_Data(db);
     Parse_Weight(db);
     Parse_Footnote(db);
 
@@ -602,10 +587,7 @@ void ParseAllFiles(sqlite3 *db) {
 int main() {
 
     sqlite3 *nutrient_db;
-    int rc;
-    const char* data = "Callback function called";
-
-    rc = sqlite3_open("nutrient_db.db", &nutrient_db);
+    int rc = sqlite3_open("nutrient_db.db", &nutrient_db);
     if (rc) {
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(nutrient_db));
         return (0);
@@ -615,20 +597,8 @@ int main() {
 
     DropAllTables(nutrient_db);
     CreateAllTables(nutrient_db);
-
     ParseAllFiles(nutrient_db);
-    /* Create SQL statement *//*
-    sql = "SELECT * from COMPANY";
 
-    *//* Execute SQL statement *//*
-    rc = sqlite3_exec(nutrient_db, sql, callback, (void*)data, &errorMessage);
-    if( rc != SQLITE_OK ){
-        fprintf(stderr, "SQL error: %s\n", errorMessage);
-        sqlite3_free(errorMessage);
-    }else{
-        fprintf(stdout, "Operation done successfully\n");
-    }
-*/
     sqlite3_close(nutrient_db);
 
     return 0;
