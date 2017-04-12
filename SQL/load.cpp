@@ -43,7 +43,7 @@ void DropAllTables(sqlite3 *nutrient_db) {
     cout << "**********************************************" << endl;
 }
 
-void CreateTable(sqlite3 *db, const char *query, const char* tableName) {
+void CreateTable(sqlite3 *db, const char *query, const char *tableName) {
     char *errorMessage;
 //    cout << endl << "Creating table : " << tableName << endl;
 
@@ -234,11 +234,11 @@ void CreateAllTables(sqlite3 *db) {
 void InsertRecord(sqlite3 *db, string query) {
     char *errorMessage;
     int rc = sqlite3_exec(db, query.c_str(), NULL, 0, &errorMessage);
-    if( rc != SQLITE_OK ){
+    if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", errorMessage);
         sqlite3_free(errorMessage);
         exit(1);
-    }else{
+    } else {
         //printf(stdout, "Record inserted successfully\n");
     }
 }
@@ -250,13 +250,13 @@ string AppendFieldValues(string query, vector<string> fieldValues) {
         if (fieldValues[i] == "" || fieldValues[i] == "~~" || fieldValues[i] == "\r") {
             query = query + "NULL";
         } else {
-            bool isString = fieldValues[i].substr(0,1) == "~";
+            bool isString = fieldValues[i].substr(0, 1) == "~";
             for (int j = 0; j < 2; j++) {
                 fieldValues[i].erase(std::remove(fieldValues[i].begin(), fieldValues[i].end(),
                                                  delim[j]), fieldValues[i].end());
             }
-            if(isString) {
-                char *safeString = sqlite3_mprintf("%q",fieldValues[i].c_str());
+            if (isString) {
+                char *safeString = sqlite3_mprintf("%q", fieldValues[i].c_str());
                 query = query + "'" + safeString + "'";
             } else {
                 query = query + fieldValues[i];
@@ -277,8 +277,7 @@ vector<string> GetFieldValues(string line) {
     string segment;
     vector<string> fieldValueList;
 
-    while(getline(stream, segment, '^'))
-    {
+    while (getline(stream, segment, '^')) {
         fieldValueList.push_back(segment);
         //cout << segment << endl;
     }
@@ -378,55 +377,6 @@ void Parse_Footnote(sqlite3 *db) {
 void Parse_Data_Src(sqlite3 *db) {
     ifstream infile("sr28asc/DATA_SRC.txt");
     int numRecords = 0;
-    /*string line;
-    getline(infile, line);
-    cout << line << endl;
-    stringstream test("~D6401~^~M. Ozcan~^~Determination of the mineral compositions of some selected oil-bearing seeds & kernels using Inductively Coupled Plasma Atomic Emmission Spectrometry (ICP-AES)~^~2006~^~Grasas y Aceites~^~57~^~2~^^");
-    string segment;
-    vector<string> seglist;
-
-    while(getline(test, segment, '^'))
-    {
-        seglist.push_back(segment);
-        cout << segment << endl;
-
-        if (segment == "") {
-            cout << "NULL" << endl;
-        }
-    }
-
-    cout << seglist.size() << endl;
-
-    if (seglist.size() == 8) {
-        seglist.push_back("");
-    }
-    string query = "INSERT INTO DATA_SRC (DataSrc_ID ,Authors, Title, Year, Journal, Vol_City, Issue_State, "
-            "Start_Page, End_Page) VALUES (";
-
-    char delim[3] = "~\r";
-    for (int i = 0; i < seglist.size(); i++) {
-        if (seglist[i] == "" || seglist[i] == "~~") {
-            query = query + "NULL";
-        } else {
-            bool isString = seglist[i].substr(0,1) == "~";
-            for (int j = 0; j < 2; j++) {
-                seglist[i].erase(std::remove(seglist[i].begin(), seglist[i].end(), delim[j]), seglist[i].end());
-            }
-            if(isString) {
-                query = query + "'" + seglist[i] + "'";
-            }
-
-        }
-        if (i != seglist.size() - 1) {
-            query = query + ",";
-        } else {
-            query = query + ");";
-        }
-    }
-
-    cout << query << endl;
-
-    InsertRecord(db, query);*/
     cout << "**********************************************" << endl;
     cout << "Parsing DATA_SRC.txt" << endl;
     for (string line; getline(infile, line);) {
@@ -587,6 +537,8 @@ void ParseAllFiles(sqlite3 *db) {
 int main() {
 
     sqlite3 *nutrient_db;
+
+    // Create the nutrient database
     int rc = sqlite3_open("nutrients.db", &nutrient_db);
     if (rc) {
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(nutrient_db));
@@ -599,6 +551,7 @@ int main() {
     CreateAllTables(nutrient_db);
     ParseAllFiles(nutrient_db);
 
+    // Close the database
     sqlite3_close(nutrient_db);
 
     return 0;
