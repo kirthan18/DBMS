@@ -191,7 +191,7 @@ void CreateTable_Data_Src_Ln(sqlite3 *db) {
                         "DataSrc_ID     CHAR(6)     NOT NULL," \
                         "PRIMARY KEY (NDB_No, Nutr_No, Datasrc_ID) " \
                         ");";
-    CreateTable(db, query, " DATSRCLN");
+    CreateTable(db, query, "DATSRCLN");
 }
 
 
@@ -207,7 +207,7 @@ void CreateTable_Data_Src(sqlite3 *db) {
                         "Start_Page     CHAR(5)                             ," \
                         "End_Page       CHAR(5)                              " \
                         ");";
-    CreateTable(db, query, " DATA_SRC");
+    CreateTable(db, query, "DATA_SRC");
 }
 
 
@@ -587,7 +587,7 @@ void ParseAllFiles(sqlite3 *db) {
 int main() {
 
     sqlite3 *nutrient_db;
-    int rc = sqlite3_open("nutrient_db.db", &nutrient_db);
+    int rc = sqlite3_open("nutrients.db", &nutrient_db);
     if (rc) {
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(nutrient_db));
         return (0);
