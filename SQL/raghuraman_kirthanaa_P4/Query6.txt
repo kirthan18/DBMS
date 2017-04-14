@@ -1,7 +1,0 @@
-SELECT NDB_No, Shrt_Desc, FdGrp_Cd FROM FOOD_DES
-WHERE (
-    NDB_No IN (SELECT NDB_No FROM NUT_DATA WHERE Nutr_No = (SELECT Nutr_No FROM NUTR_DEF WHERE NutrDesc = 'Water'))
-    AND
-    NDB_No NOT IN (SELECT NDB_No FROM NUT_DATA WHERE Nutr_No = (SELECT Nutr_No FROM NUTR_DEF WHERE NutrDesc = 'Calcium'))
-)
-ORDER BY FdGrp_Cd DESC, Shrt_Desc ASC;
