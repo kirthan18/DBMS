@@ -16,9 +16,18 @@ get the aggregate count of nutrients. Then I am using another GROUP BY to get th
 particular food item chosen in the sub query.
 
 Query 5:
-In this query, I first find the average nutrient value of each food item by summing up all the constituent nutrient
-values. Then i use this computed value to determine if this food item should be selected by comparing its average
+In this query, I first find the average nutrient value of each food item by using AVG aggregate operator using GROUP BY. Then i use this computed value to determine if this food item should be selected by comparing its average
 nutrient value with that of “McDONALD'S, Hamburger”.
+
+Another query I came up with is :
+SELECT FOOD_DES.NDB_No, FOOD_DES.Long_Desc FROM FOOD_DES WHERE NDB_NO IN
+(SELECT TEMP.NDB_NO FROM
+(SELECT NDB_No, AVG(Nutr_Val) AS AVERAGE FROM NUT_DATA
+GROUP BY NDB_No) AS TEMP
+WHERE TEMP.AVERAGE > (SELECT AVG(Nutr_Val) FROM NUT_DATA
+                 WHERE NUT_DATA.NDB_No = (SELECT NDB_No FROM FOOD_DES WHERE Long_Desc = 'McDONALD''S, Hamburger')));
+
+But this query requires to create another temporary table which may not be efficient.
 
 Query 6:
 Here I am using 2 sub queries to get a list of food items that contain water and calcium. Then I use another SELECT
